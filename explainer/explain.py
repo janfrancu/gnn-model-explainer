@@ -546,17 +546,19 @@ class Explainer:
         ref_feat = torch.FloatTensor(ref_feat)
         curr_feat = torch.FloatTensor(curr_feat)
 
+        ### permutation matrix?
+        ### assigment matrix
+        ### it has the dimension of [#ref nodes, #curr nodes]
         P = nn.Parameter(torch.FloatTensor(ref_adj.shape[0], curr_adj.shape[0]))
         with torch.no_grad():
             nn.init.constant_(P, 1.0 / ref_adj.shape[0])
             P[ref_node_idx, :] = 0.0
             P[:, curr_node_idx] = 0.0
-            P[ref_node_idx, curr_node_idx] = 1.0
+            P[ref_node_idx, curr_node_idx] = 1.0 ### we probably know for sure that ref_node and curr_node are the same
         opt = torch.optim.Adam([P], lr=0.01, betas=(0.5, 0.999))
-        for i in range(args.align_steps):
+        for i in range(args.align_steps): ### by default 1000 steps
             opt.zero_grad()
-            feat_loss = torch.norm(P @ curr_feat - ref_feat)
-
+            feat_loss = torch.norm(P @ curr_feat - ref_feat) ### on this assigment we should get zero norm, i.e. matching feature of individual nodes
             aligned_adj = P @ curr_adj @ torch.transpose(P, 0, 1)
             align_loss = torch.norm(aligned_adj - ref_adj)
             loss = feat_loss + align_loss
