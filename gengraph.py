@@ -126,7 +126,7 @@ def gen_syn1(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
     basis_type = "ba"
     list_shapes = [["house"]] * nb_shapes
 
-    plt.figure(figsize=(8, 6), dpi=300)
+    # plt.figure(figsize=(8, 6), dpi=300)
 
     G, role_id, _ = synthetic_structsim.build_graph(
         width_basis, basis_type, list_shapes, start=0, m=5
@@ -208,7 +208,7 @@ def gen_syn3(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
     basis_type = "ba"
     list_shapes = [["grid", 3]] * nb_shapes
 
-    plt.figure(figsize=(8, 6), dpi=300)
+    # plt.figure(figsize=(8, 6), dpi=300)
 
     G, role_id, _ = synthetic_structsim.build_graph(
         width_basis, basis_type, list_shapes, start=0, m=5
@@ -242,7 +242,7 @@ def gen_syn4(nb_shapes=60, width_basis=8, feature_generator=None, m=4):
     basis_type = "tree"
     list_shapes = [["cycle", 6]] * nb_shapes
 
-    fig = plt.figure(figsize=(8, 6), dpi=300)
+    # fig = plt.figure(figsize=(8, 6), dpi=300)
 
     G, role_id, plugins = synthetic_structsim.build_graph(
         width_basis, basis_type, list_shapes, start=0
@@ -255,9 +255,9 @@ def gen_syn4(nb_shapes=60, width_basis=8, feature_generator=None, m=4):
 
     name = basis_type + "_" + str(width_basis) + "_" + str(nb_shapes)
 
-    path = os.path.join("log/syn4_base_h20_o20")
-    writer = SummaryWriter(path)
-    io_utils.log_graph(writer, G, "graph/full")
+    # path = os.path.join("log/syn4_base_h20_o20")
+    # writer = SummaryWriter(path)
+    # io_utils.log_graph(writer, G, "graph/full")
 
     return G, role_id, name
 
@@ -281,7 +281,7 @@ def gen_syn5(nb_shapes=80, width_basis=8, feature_generator=None, m=3):
     basis_type = "tree"
     list_shapes = [["grid", m]] * nb_shapes
 
-    plt.figure(figsize=(8, 6), dpi=300)
+    # plt.figure(figsize=(8, 6), dpi=300)
 
     G, role_id, _ = synthetic_structsim.build_graph(
         width_basis, basis_type, list_shapes, start=0
@@ -294,7 +294,7 @@ def gen_syn5(nb_shapes=80, width_basis=8, feature_generator=None, m=3):
 
     name = basis_type + "_" + str(width_basis) + "_" + str(nb_shapes)
 
-    path = os.path.join("log/syn5_base_h20_o20")
-    writer = SummaryWriter(path)
+    # path = os.path.join("log/syn5_base_h20_o20")
+    # writer = SummaryWriter(path)
 
     return G, role_id, name
