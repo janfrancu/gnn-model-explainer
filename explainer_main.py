@@ -309,9 +309,30 @@ def main():
 
         else: ### this is run by default, explain 60 nodes in some range
             # explain a set of nodes
-            masked_adj = explainer.explain_nodes_gnn_stats(
-                range(400, 700, 5), prog_args
-            )
+            if prog_args.dataset == "syn1":
+                masked_adj = explainer.explain_nodes_gnn_stats(
+                    range(300, 700, 5), prog_args
+                )
+
+            elif prog_args.dataset == "syn2":
+                masked_adj = explainer.explain_nodes_gnn_stats(
+                    list(range(300, 700, 5)) + list(range(1000, 1400, 5)), prog_args
+                )
+
+            elif prog_args.dataset == "syn3":
+                masked_adj = explainer.explain_nodes_gnn_stats(
+                    range(301,1019,9), prog_args
+                )
+
+            elif prog_args.dataset == "syn4":
+                masked_adj = explainer.explain_nodes_gnn_stats(
+                    range(511, 870, 6), prog_args
+                )
+
+            elif prog_args.dataset == "syn5":
+                masked_adj = explainer.explain_nodes_gnn_stats(
+                    range(512,1230,9), prog_args
+                )
 
 if __name__ == "__main__":
     main()
