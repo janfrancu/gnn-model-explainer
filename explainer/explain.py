@@ -6,6 +6,7 @@
 import math
 import time
 import os
+import random ### for random hash computation
 
 import matplotlib
 import matplotlib.colors as colors
@@ -363,25 +364,18 @@ class Explainer:
         auc_all = roc_auc_score(real_all, pred_all)
         precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
 
-        plt.switch_backend("agg")
-        plt.plot(recall, precision)
-        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + ".png")
-
-        plt.close()
-
-        auc_all = roc_auc_score(real_all, pred_all)
-        precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
+        h = hex(random.getrandbits(32))
 
         plt.switch_backend("agg")
         plt.plot(recall, precision)
-        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + ".png")
+        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + "_" + h + ".png")
 
         plt.close()
 
-        with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "w") as f:
+        with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
             f.write(
-                "dataset: {}, model: {}, auc: {}\n".format(
-                    self.args.dataset, "exp", str(auc_all)
+                "dataset: {}, model: {}, random: {}, auc: {}\n".format(
+                    self.args.dataset, "exp", h, str(auc_all)
                 )
             )
 
