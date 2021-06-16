@@ -322,6 +322,8 @@ def train_node_classifier(G, labels, model, args, writer=None):
             writer.add_scalars(
                 "acc", {"train": result_train["acc"], "test": result_test["acc"]}, epoch
             )
+            writer.add_image("cm/train", np.repeat(np.expand_dims(result_train["conf_mat"]/np.sum(result_train["conf_mat"]), axis=0), 3, axis=0), epoch)
+            writer.add_image("cm/test", np.repeat(np.expand_dims(result_test["conf_mat"]/np.sum(result_test["conf_mat"]), axis=0), 3, axis=0), epoch)
 
         if epoch % 10 == 0:
             print(
