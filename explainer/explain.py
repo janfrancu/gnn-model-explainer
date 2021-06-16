@@ -85,6 +85,11 @@ class Explainer:
             neighbors = np.asarray(range(self.adj.shape[0]))
         else:
             print("node label: ", self.label[graph_idx][node_idx])
+            ###
+            # node_idx_new ... index of the node in the new up to n_hops neighborhood subgraph
+            # neighbors    ... up to n_hops neighbors indeces
+            # sub_*        ... adj matrix, features and labels of the neighborhood subgraph
+            ###
             node_idx_new, sub_adj, sub_feat, sub_label, neighbors = self.extract_neighborhood(
                 node_idx, graph_idx
             )
@@ -102,6 +107,7 @@ class Explainer:
             pred_label = np.argmax(self.pred[0][graph_idx], axis=0)
             print("Graph predicted label: ", pred_label)
         else:
+            ### argmax prediction on each node's softmaxes
             pred_label = np.argmax(self.pred[graph_idx][neighbors], axis=1)
             print("Node predicted label: ", pred_label[node_idx_new])
 
@@ -118,7 +124,7 @@ class Explainer:
         if self.args.gpu:
             explainer = explainer.cuda()
 
-        self.model.eval()
+        self.model.eval() ### we are switching to evaluation mode
 
 
         # gradient baseline
@@ -131,13 +137,27 @@ class Explainer:
             masked_adj = adj_grad + adj_grad.t()
             masked_adj = nn.functional.sigmoid(masked_adj)
             masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze()
-        else:
-            explainer.train()
+        else: ### this is run in case of explain node stats where by default model="exp"
+            explainer.train() ### switching to training mode
             begin_time = time.time()
-            for epoch in range(self.args.num_epochs):
+            for epoch in range(self.args.num_epochs): ### 100 by default
                 explainer.zero_grad()
                 explainer.optimizer.zero_grad()
+                ###
+                # unconstrained = false by default
+                # ypred are predictions on a particular node (the one that we are investigating)
+                # adj_atts are the outputs of individual layers of gcn
+                ###
                 ypred, adj_atts = explainer(node_idx_new, unconstrained=unconstrained)
+
+                ###
+                # + log of the softmax output at position given by the argmax prediction based on neighborhood graph
+                # + 0.005 * (l1 norm of edge mask) 
+                # + 1.0 * (l1 norm of feature mask)
+                # + 1.0 * (entropy of edge mask)
+                # + 0.1 * (entropy of feature mask)
+                # + 1.0 * (pred label^T * laplacian * pred labels of masked adjacency matrix)
+                ###
                 loss = explainer.loss(ypred, pred_label, node_idx_new, epoch)
                 loss.backward()
 
@@ -233,7 +253,8 @@ class Explainer:
         """
         masked_adjs = [
             self.explain(node_idx, graph_idx=graph_idx) for node_idx in node_indices
-        ]
+        ] ### this should have length of 4 by default
+        ### only the first two indeces are explained
         ref_idx = node_indices[0]
         ref_adj = masked_adjs[0]
         curr_idx = node_indices[1]
@@ -259,6 +280,12 @@ class Explainer:
         # curr center node
         curr_node_idx = list(G_curr.nodes()).index(new_curr_idx)
 
+        ###
+        # we pass two thresholded adjacency matrices, center indeces and features matrices
+        # we are aligning current graph to the reference graph
+        # in return we get the permutation P, permuted current adjacency and feature matrix
+        # all computed in terms of L2 norm
+        ###
         P, aligned_adj, aligned_feat = self.align(
             denoised_ref_feat,
             denoised_ref_adj,
@@ -304,9 +331,16 @@ class Explainer:
         pred_all = []
         real_all = []
         for i, idx in enumerate(node_indices):
-            new_idx, _, feat, _, _ = self.extract_neighborhood(idx)
+            ### extracts the up to n(=3) hops neighborhood (given by the number of convolutions-message passes)
+            new_idx, adj, feat, label, neighbors = self.extract_neighborhood(idx)
+            
+            ### threshold_num ... maximum number of nodes in the vertex neighborhood induced subgraph
+            ### returns the largest component of the pruned graph based on the threshold num
             G = io_utils.denoise_graph(masked_adjs[i], new_idx, feat, threshold_num=20)
-            pred, real = self.make_pred_real(masked_adjs[i], new_idx)
+            
+            ### this returns the simple 0 thresholed adjacency matrix and more importantly
+            ### the real adjacency matrix of the individual motifs
+            pred, real = self.make_pred_real(masked_adjs[i], new_idx) 
             pred_all.append(pred)
             real_all.append(real)
             denoised_feat = np.array([G.nodes[node]["feat"] for node in G.nodes()])
@@ -322,6 +356,7 @@ class Explainer:
                 args=self.args
             )
 
+        ### measuring auc on the mask themselves
         pred_all = np.concatenate((pred_all), axis=0)
         real_all = np.concatenate((real_all), axis=0)
 
@@ -533,10 +568,13 @@ class Explainer:
         return P, aligned_adj, P @ curr_feat
 
     def make_pred_real(self, adj, start):
+        ### adj is the masked adjacency returned by training 
+        ### start is the queried node index
+
         # house graph
         if self.args.dataset == "syn1" or self.args.dataset == "syn2":
             # num_pred = max(G.number_of_edges(), 6)
-            pred = adj[np.triu(adj) > 0]
+            pred = adj[np.triu(adj) > 0] ### this takes only the edges that are nonzero, disregarding the lower triangular entries
             real = adj.copy()
 
             if real[start][start + 1] > 0:
@@ -644,7 +682,7 @@ class ExplainModule(nn.Module):
 
     def construct_edge_mask(self, num_nodes, init_strategy="normal", const_val=1.0):
         mask = nn.Parameter(torch.FloatTensor(num_nodes, num_nodes))
-        if init_strategy == "normal":
+        if init_strategy == "normal": ### this is the default from the constructor
             std = nn.init.calculate_gain("relu") * math.sqrt(
                 2.0 / (num_nodes + num_nodes)
             )
@@ -662,9 +700,9 @@ class ExplainModule(nn.Module):
 
         return mask, mask_bias
 
-    def _masked_adj(self):
+    def _masked_adj(self): ### we are making the edge mask symetric here
         sym_mask = self.mask
-        if self.mask_act == "sigmoid":
+        if self.mask_act == "sigmoid": ### this is the one
             sym_mask = torch.sigmoid(self.mask)
         elif self.mask_act == "ReLU":
             sym_mask = nn.ReLU()(self.mask)
@@ -690,7 +728,7 @@ class ExplainModule(nn.Module):
             self.masked_adj = (
                 torch.unsqueeze((sym_mask + sym_mask.t()) / 2, 0) * self.diag_mask
             )
-        else:
+        else: ### default is constrained
             self.masked_adj = self._masked_adj()
             if mask_features:
                 feat_mask = (
@@ -743,31 +781,31 @@ class ExplainModule(nn.Module):
             pred: prediction made by current model
             pred_label: the label predicted by the original model.
         """
-        mi_obj = False
+        mi_obj = False ### that is a nice piece of code
         if mi_obj:
             pred_loss = -torch.sum(pred * torch.log(pred))
         else:
             pred_label_node = pred_label if self.graph_mode else pred_label[node_idx]
             gt_label_node = self.label if self.graph_mode else self.label[0][node_idx]
             logit = pred[gt_label_node]
-            pred_loss = -torch.log(logit)
+            pred_loss = -torch.log(logit) ### log of softmax output?
         # size
         mask = self.mask
         if self.mask_act == "sigmoid":
             mask = torch.sigmoid(self.mask)
         elif self.mask_act == "ReLU":
             mask = nn.ReLU()(self.mask)
-        size_loss = self.coeffs["size"] * torch.sum(mask)
+        size_loss = self.coeffs["size"] * torch.sum(mask) ### l1 loss with some default param 0.005
 
         # pre_mask_sum = torch.sum(self.feat_mask)
         feat_mask = (
             torch.sigmoid(self.feat_mask) if self.use_sigmoid else self.feat_mask
         )
-        feat_size_loss = self.coeffs["feat_size"] * torch.mean(feat_mask)
+        feat_size_loss = self.coeffs["feat_size"] * torch.mean(feat_mask) ### l1 loss over feature mask * 1.0
 
         # entropy
         mask_ent = -mask * torch.log(mask) - (1 - mask) * torch.log(1 - mask)
-        mask_ent_loss = self.coeffs["ent"] * torch.mean(mask_ent)
+        mask_ent_loss = self.coeffs["ent"] * torch.mean(mask_ent) ### entropy of edge mask
 
         feat_mask_ent = - feat_mask             \
                         * torch.log(feat_mask)  \

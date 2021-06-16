@@ -64,6 +64,8 @@ def join_graph(G1, G2, n_pert_edges):
     F = nx.compose(G1, G2)
     edge_cnt = 0
     while edge_cnt < n_pert_edges:
+        ### G2 has shifted node indeces 
+        ### there should not be random edges connecting motifs from the same community
         node_1 = np.random.choice(G1.nodes())
         node_2 = np.random.choice(G2.nodes())
         F.add_edge(node_1, node_2)
@@ -81,11 +83,12 @@ def preprocess_input_graph(G, labels, normalize_adj=False):
         A dictionary containing adjacency, node features and labels
     """
     adj = np.array(nx.to_numpy_matrix(G))
+    ### normalization defaults to false when calling from train_node_classifier
     if normalize_adj:
         sqrt_deg = np.diag(1.0 / np.sqrt(np.sum(adj, axis=0, dtype=float).squeeze()))
         adj = np.matmul(np.matmul(sqrt_deg, adj), sqrt_deg)
 
-    existing_node = list(G.nodes)[-1]
+    existing_node = list(G.nodes)[-1] ### this is just to get the number of features
     feat_dim = G.nodes[existing_node]["feat"].shape[0]
     f = np.zeros((G.number_of_nodes(), feat_dim), dtype=float)
     for i, u in enumerate(G.nodes()):
@@ -128,7 +131,7 @@ def gen_syn1(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
     G, role_id, _ = synthetic_structsim.build_graph(
         width_basis, basis_type, list_shapes, start=0, m=5
     )
-    G = perturb([G], 0.01)[0]
+    G = perturb([G], 0.01)[0] ### adds 1% of new edges
 
     if feature_generator is None:
         feature_generator = featgen.ConstFeatureGen(1)
@@ -176,6 +179,8 @@ def gen_syn2(nb_shapes=100, width_basis=350):
     G2 = nx.relabel_nodes(G2, g2_map)
 
     # Join
+    ### there are no random edges added to this graph either G1 or G2
+    ### however they are adding random edges during the join, otherwise the graphs would be independent
     n_pert_edges = width_basis
     G = join_graph(G1, G2, n_pert_edges)
 
@@ -264,7 +269,7 @@ def gen_syn5(nb_shapes=80, width_basis=8, feature_generator=None, m=3):
 
     Args:
         nb_shapes         :  The number of shapes (here 'houses') that should be added to the base graph.
-        width_basis       :  The width of the basis graph (here a random 'grid').
+        width_basis       :  The width of the basis graph (here a random 'grid'). ### incorrect documentation
         feature_generator :  A `FeatureGenerator` for node features. If `None`, add constant features to nodes.
         m                 :  The tree depth.
 

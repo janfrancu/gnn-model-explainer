@@ -8,7 +8,9 @@ import torch
 import torch.utils.data
 
 
-class GraphSampler(torch.utils.data.Dataset):
+### map style dataset as in https://pytorch.org/docs/stable/data.html#map-style-datasets
+### wrapped in torch.utils.data.DataLoader
+class GraphSampler(torch.utils.data.Dataset): 
     """ Sample graphs and nodes in graph
     """
 
@@ -16,7 +18,7 @@ class GraphSampler(torch.utils.data.Dataset):
         self,
         G_list,
         features="default",
-        normalize=True,
+        normalize=True,  ### normalization is turned off when called from prepare_data
         assign_feat="default",
         max_num_nodes=0,
     ):
@@ -152,7 +154,7 @@ def neighborhoods(adj, n_hops, use_cuda):
     hop_adj = power_adj = adj
     for i in range(n_hops - 1):
         power_adj = power_adj @ adj
-        prev_hop_adj = hop_adj
+        prev_hop_adj = hop_adj ### dead code
         hop_adj = hop_adj + power_adj
         hop_adj = (hop_adj > 0).float()
     return hop_adj.cpu().numpy().astype(int)

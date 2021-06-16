@@ -293,6 +293,7 @@ def build_graph(
     if basis_type == "ba":
         basis, role_id = eval(basis_type)(start, width_basis, m=m)
     else:
+        ### width is the tree depth, 8 by default for both syn4 and syn5
         basis, role_id = eval(basis_type)(start, width_basis)
 
     n_basis, n_shapes = nx.number_of_nodes(basis), len(list_shapes)
@@ -301,7 +302,7 @@ def build_graph(
     # Sample (with replacement) where to attach the new motifs
     if rdm_basis_plugins is True:
         plugins = np.random.choice(n_basis, n_shapes, replace=False)
-    else:
+    else: ### rdm_basis_plugins is always false so this is the branch to look into
         spacing = math.floor(n_basis / n_shapes)
         plugins = [int(k * spacing) for k in range(n_shapes)]
     seen_shapes = {"basis": [0, n_basis]}
@@ -333,7 +334,7 @@ def build_graph(
         role_id += temp_labels
         start += n_s
 
-    if add_random_edges > 0:
+    if add_random_edges > 0: ### by default this is not called and instead the addition of nodes is done inside `perturb`
         # add random edges between nodes:
         for p in range(add_random_edges):
             src, dest = np.random.choice(nx.number_of_nodes(basis), 2, replace=False)

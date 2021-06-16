@@ -43,6 +43,7 @@ import models
 # Prepare Data
 #
 #############################
+### graphs is probably a list of graphs
 def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
 
     random.shuffle(graphs)
@@ -109,7 +110,7 @@ def prepare_data(graphs, args, test_graphs=None, max_nodes=0):
     )
     test_dataset_loader = torch.utils.data.DataLoader(
         dataset_sampler,
-        batch_size=args.batch_size,
+        batch_size=args.batch_size, ### how does the batching work inside this loader? (by default bs is 20 samples)
         shuffle=False,
         num_workers=args.num_workers,
     )
@@ -163,6 +164,7 @@ def train(
         print("Epoch: ", epoch)
         for batch_idx, data in enumerate(dataset):
             model.zero_grad()
+            ### this all is just to get some data to be serialized alongside the model
             if batch_idx == 0:
                 prev_adjs = data["adj"]
                 prev_feats = data["feats"]
@@ -271,6 +273,7 @@ def train_node_classifier(G, labels, model, args, writer=None):
     train_idx = idx[:num_train]
     test_idx = idx[num_train:]
 
+    ### this contains similar preprocessing as graph sampler
     data = gengraph.preprocess_input_graph(G, labels)
     labels_train = torch.tensor(data["labels"][:, train_idx], dtype=torch.long)
     adj = torch.tensor(data["adj"], dtype=torch.float)
@@ -278,7 +281,7 @@ def train_node_classifier(G, labels, model, args, writer=None):
     scheduler, optimizer = train_utils.build_optimizer(
         args, model.parameters(), weight_decay=args.weight_decay
     )
-    model.train()
+    model.train() ### set the model for training
     ypred = None
     for epoch in range(args.num_epochs):
         begin_time = time.time()
@@ -288,13 +291,13 @@ def train_node_classifier(G, labels, model, args, writer=None):
             ypred, adj_att = model(x.cuda(), adj.cuda())
         else:
             ypred, adj_att = model(x, adj)
-        ypred_train = ypred[:, train_idx, :]
+        ypred_train = ypred[:, train_idx, :] ### compute loss only on training vertices
         if args.gpu:
             loss = model.loss(ypred_train, labels_train.cuda())
         else:
             loss = model.loss(ypred_train, labels_train)
         loss.backward()
-        nn.utils.clip_grad_norm(model.parameters(), args.clip)
+        nn.utils.clip_grad_norm_(model.parameters(), args.clip)
 
         optimizer.step()
         #for param_group in optimizer.param_groups:
@@ -890,7 +893,7 @@ def benchmark_task(args, writer=None, feat="node-label"):
             featgen_const.gen_node_features(G)
 
     train_dataset, val_dataset, test_dataset, max_num_nodes, input_dim, assign_input_dim = prepare_data(
-        graphs, args, max_nodes=args.max_nodes
+        graphs, args, max_nodes=args.max_nodes ### from configs this is set to 100
     )
     if args.method == "soft-assign":
         print("Method: soft-assign")

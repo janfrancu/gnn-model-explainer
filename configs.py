@@ -58,7 +58,9 @@ def arg_parse():
             help='Number of graph convolution layers before each pooling')
     parser.add_argument('--bn', dest='bn', action='store_const',
             const=True, default=False,
-            help='Whether batch normalization is used')
+            help='Whether batch normalization is used') 
+        # by default batch normalization is off 
+        # https://stackoverflow.com/questions/27694032/difference-between-default-and-store-const-in-argparse#27696002
     parser.add_argument('--dropout', dest='dropout', type=float,
             help='Dropout rate.')
     parser.add_argument('--nobias', dest='bias', action='store_const',

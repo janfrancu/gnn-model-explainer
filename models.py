@@ -363,6 +363,7 @@ class GcnEncoderNode(GcnEncoderGraph):
     def forward(self, x, adj, batch_num_nodes=None, **kwargs):
         # mask
         max_num_nodes = adj.size()[1]
+        ### this allows node based batching by masking out all the other vertices?
         if batch_num_nodes is not None:
             embedding_mask = self.construct_mask(max_num_nodes, batch_num_nodes)
         else:

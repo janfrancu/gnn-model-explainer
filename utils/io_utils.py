@@ -221,7 +221,7 @@ def denoise_graph(adj, node_idx, feat=None, label=None, threshold=None, threshol
         threshold_num = min(neigh_size, adj_threshold_num)
         threshold = np.sort(adj[adj > 0])[-threshold_num]
 
-    if threshold is not None:
+    if threshold is not None: ### this branch as threshold is computed using threshold_num
         weighted_edge_list = [
             (i, j, adj[i, j])
             for i in range(num_nodes)
@@ -236,7 +236,7 @@ def denoise_graph(adj, node_idx, feat=None, label=None, threshold=None, threshol
             if adj[i, j] > 1e-6
         ]
     G.add_weighted_edges_from(weighted_edge_list)
-    if max_component:
+    if max_component: ### by default true
         largest_cc = max(nx.connected_components(G), key=len)
         G = G.subgraph(largest_cc).copy()
     else:

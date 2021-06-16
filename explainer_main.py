@@ -92,7 +92,7 @@ def arg_parse():
         action="store_const",
         const=True,
         default=False,
-        help="Whether to add bias. Default to True.",
+        help="Whether to add bias. Default to True.", ### well it does not default to True...
     )
     parser.add_argument(
         "--explain-node", dest="explain_node", type=int, help="Node to explain."
@@ -254,15 +254,15 @@ def main():
     # TODO: API should definitely be cleaner
     # Let's define exactly which modes we support 
     # We could even move each mode to a different method (even file)
-    if prog_args.explain_node is not None:
-        explainer.explain(prog_args.explain_node, unconstrained=False)
-    elif graph_mode:
+    if prog_args.explain_node is not None: ### explains just one node in a graph
+        explainer.explain(prog_args.explain_node, unconstrained=False) 
+    elif graph_mode: ### by default we do the node explanation i.e. graph_mode = false
         if prog_args.multigraph_class >= 0:
             print(cg_dict["label"])
             # only run for graphs with label specified by multigraph_class
             labels = cg_dict["label"].numpy()
             graph_indices = []
-            for i, l in enumerate(labels):
+            for i, l in enumerate(labels): ### by default explain 30 graphs (samples) of the same label as `multinode_class`
                 if l == prog_args.multigraph_class:
                     graph_indices.append(i)
                 if len(graph_indices) > 30:
@@ -287,6 +287,7 @@ def main():
             )
             io_utils.plot_cmap_tb(writer, "tab20", 20, "tab20_cmap")
     else:
+        ### multinode_class is by default some undefined integer
         if prog_args.multinode_class >= 0:
             print(cg_dict["label"])
             # only run for nodes with label specified by multinode_class
@@ -294,7 +295,7 @@ def main():
 
             node_indices = []
             for i, l in enumerate(labels):
-                if len(node_indices) > 4:
+                if len(node_indices) > 4: ### by default explain 4 nodes of the same label as `multinode_class`
                     break
                 if l == prog_args.multinode_class:
                     node_indices.append(i)
@@ -306,7 +307,7 @@ def main():
             )
             explainer.explain_nodes(node_indices, prog_args)
 
-        else:
+        else: ### this is run by default, explain 60 nodes in some range
             # explain a set of nodes
             masked_adj = explainer.explain_nodes_gnn_stats(
                 range(400, 700, 5), prog_args
