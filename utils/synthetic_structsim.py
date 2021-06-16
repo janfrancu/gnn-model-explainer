@@ -296,6 +296,11 @@ def build_graph(
         ### width is the tree depth, 8 by default for both syn4 and syn5
         basis, role_id = eval(basis_type)(start, width_basis)
 
+    # set edge weights in basis graph
+    for e in basis.edges:
+        basis.edges[e]['weight'] = 1.0
+        basis.edges[e]['edge_type'] = 'basis'
+
     n_basis, n_shapes = nx.number_of_nodes(basis), len(list_shapes)
     start += n_basis  # indicator of the id of the next node
 
@@ -321,14 +326,14 @@ def build_graph(
             col_start = np.max(role_id) + 1
             seen_shapes[shape_type] = [col_start, n_s]
         # Attach the shape to the basis
-        basis.add_nodes_from(graph_s.nodes())
-        basis.add_edges_from(graph_s.edges())
-        basis.add_edges_from([(start, plugins[shape_id])])
+        basis.add_nodes_from(graph_s.nodes(), shape_type=shape_type,  shape_id=shape_id)                ### add vertex identification
+        basis.add_edges_from(graph_s.edges(), weight=10.0, edge_type=shape_type + ' ' + str(shape_id))  ### add edge identification
+        basis.add_edges_from([(start, plugins[shape_id])], weight=2.0, edge_type='connection')
         if shape_type == "cycle":
             if np.random.random() > 0.5:
                 a = np.random.randint(1, 4)
                 b = np.random.randint(1, 4)
-                basis.add_edges_from([(a + start, b + plugins[shape_id])])
+                basis.add_edges_from([(a + start, b + plugins[shape_id])], weight=0.5, edge_type='random_cycle')
         temp_labels = [r + col_start for r in roles_graph_s]
         # temp_labels[0] += 100 * seen_shapes[shape_type][0]
         role_id += temp_labels
