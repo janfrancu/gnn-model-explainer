@@ -363,6 +363,7 @@ class Explainer:
 
         auc_all = roc_auc_score(real_all, pred_all)
         precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
+        acc_all = metrics.accuracy_score(real_all, pred_all > 0)
 
         h = hex(random.getrandbits(32))
 
@@ -374,8 +375,8 @@ class Explainer:
 
         with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
             f.write(
-                "dataset: {}, model: {}, random: {}, auc: {}\n".format(
-                    self.args.dataset, "exp", h, str(auc_all)
+                "dataset: {}, model: {}, random: {}, auc: {}, acc: {}\n".format(
+                    self.args.dataset, "exp", h, str(auc_all), str(acc_all)
                 )
             )
 
