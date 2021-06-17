@@ -327,7 +327,7 @@ def build_graph(
             seen_shapes[shape_type] = [col_start, n_s]
         # Attach the shape to the basis
         basis.add_nodes_from(graph_s.nodes(), shape_type=shape_type,  shape_id=shape_id)                ### add vertex identification
-        basis.add_edges_from(graph_s.edges(), weight=10.0, edge_type=shape_type + ' ' + str(shape_id))  ### add edge identification
+        basis.add_edges_from(graph_s.edges(), weight=10.0, edge_type=shape_type + '_' + str(shape_id))  ### add edge identification
         basis.add_edges_from([(start, plugins[shape_id])], weight=2.0, edge_type='connection')
         if shape_type == "cycle":
             if np.random.random() > 0.5:
