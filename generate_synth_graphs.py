@@ -51,11 +51,10 @@ def convert_to_json(G, labels, name):
    with open(name + '.json', 'w') as file:
        file.write(json.dumps(data))
 
-
-fun = "syn_task1"
-
 for sample in range(10):
    for i in range(5):
        fun = 'syn_task' + str(i+1)
        G, labels, name = eval(fun)()
+       l = np.array(labels)
+       print(np.nonzero(l > 0))
        convert_to_json(G, labels, 'synth_graphs/' + fun + '_' + name + '_' + str(sample+1))
