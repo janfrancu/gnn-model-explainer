@@ -307,31 +307,31 @@ def main():
             )
             explainer.explain_nodes(node_indices, prog_args)
 
-        else: ### this is run by default, explain 60 nodes in some range
+        else: ### this is run by default, modified to be able to evaluate all the examples
             # explain a set of nodes
             if prog_args.dataset == "syn1":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    range(300, 700, 5), prog_args
+                    [i for i in range(300, 700, 5) if i not in cg_dict["train_idx"]], prog_args
                 )
 
             elif prog_args.dataset == "syn2":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    list(range(300, 700, 5)) + list(range(1000, 1400, 5)), prog_args
+                    [i for i in list(range(300, 700, 5)) + list(range(1000, 1400, 5)) if i not in cg_dict["train_idx"]], prog_args
                 )
 
             elif prog_args.dataset == "syn3":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    range(301,1019,9), prog_args
+                    [i for i in range(301, 1019, 9) if i not in cg_dict["train_idx"]], prog_args
                 )
 
             elif prog_args.dataset == "syn4":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    range(511, 870, 6), prog_args
+                    [i for i in range(511, 870, 6) if i not in cg_dict["train_idx"]], prog_args
                 )
 
             elif prog_args.dataset == "syn5":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    range(512,1230,9), prog_args
+                    [i for i in range(512, 1230, 9) if i not in cg_dict["train_idx"]], prog_args
                 )
 
 if __name__ == "__main__":
