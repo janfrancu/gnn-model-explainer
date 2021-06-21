@@ -1,5 +1,6 @@
 #!/bin/bash
 REPETITIONS=$1
+EXP_MODEL=$2
 NUM_CONC=1
 
 LOG_DIR="${HOME}/logs/GNNExplainer/"
@@ -14,5 +15,5 @@ do
 	sbatch \
 	--array=1-${REPETITIONS}%${NUM_CONC} \
 	--output="${LOG_DIR}/${d}-%A_%a.out" \
-	./run_train_explain.sh ${d}
+	./run_train_explain.sh ${d} ${EXP_MODEL}
 done

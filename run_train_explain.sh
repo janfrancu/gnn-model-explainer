@@ -6,6 +6,7 @@
 #SBATCH --qos==collaborator
 
 DATASET=$1
+EXP_MODEL=$2
 
 module load Python/3.8.2-GCCcore-9.3.0
 
@@ -13,4 +14,4 @@ module load Python/3.8.2-GCCcore-9.3.0
 source ./pyenv_gnn/bin/activate
 
 python ./train.py --dataset=$DATASET
-python ./explainer_main.py --dataset=$DATASET
+python ./explainer_main.py --dataset=$DATASET --model=$EXP_MODEL

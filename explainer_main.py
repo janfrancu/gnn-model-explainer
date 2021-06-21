@@ -130,6 +130,11 @@ def arg_parse():
     parser.add_argument(
         "--method", dest="method", type=str, help="Method. Possible values: base, att."
     )
+
+    parser.add_argument(
+        "--model", dest="model", type=str, help="Explanation model. Possible values: exp, grad."
+    )
+
     parser.add_argument(
         "--name-suffix", dest="name_suffix", help="suffix added to the output filename"
     )
@@ -156,6 +161,7 @@ def arg_parse():
         num_gc_layers=3,
         dropout=0.0,
         method="base",
+        model="exp",
         name_suffix="",
         explainer_suffix="",
         align_steps=1000,
@@ -311,27 +317,27 @@ def main():
             # explain a set of nodes
             if prog_args.dataset == "syn1":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(300, 700, 5) if i not in cg_dict["train_idx"]], prog_args
+                    [i for i in range(300, 700, 5) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn2":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in list(range(300, 700, 5)) + list(range(1000, 1400, 5)) if i not in cg_dict["train_idx"]], prog_args
+                    [i for i in list(range(300, 700, 5)) + list(range(1000, 1400, 5)) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn3":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(301, 1019, 9) if i not in cg_dict["train_idx"]], prog_args
+                    [i for i in range(301, 1019, 9) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn4":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(511, 870, 6) if i not in cg_dict["train_idx"]], prog_args
+                    [i for i in range(511, 870, 6) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn5":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(512, 1230, 9) if i not in cg_dict["train_idx"]], prog_args
+                    [i for i in range(512, 1230, 9) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
 if __name__ == "__main__":
