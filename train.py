@@ -636,6 +636,15 @@ def syn_task2(args, writer=None):
 
     if args.method == "attn":
         print("Method: attn")
+        model = models.GcnEncoderNode(
+            args.input_dim,
+            args.hidden_dim,
+            args.output_dim,
+            num_classes,
+            args.num_gc_layers,
+            bn=args.bn,
+            args=args,
+        )
     else:
         print("Method:", args.method)
         model = models.GcnEncoderNode(
@@ -663,6 +672,15 @@ def syn_task3(args, writer=None):
 
     if args.method == "attn":
         print("Method: attn")
+        model = models.GcnEncoderNode(
+            args.input_dim,
+            args.hidden_dim,
+            args.output_dim,
+            num_classes,
+            args.num_gc_layers,
+            bn=args.bn,
+            args=args,
+        )
     else:
         print("Method:", args.method)
         model = models.GcnEncoderNode(
@@ -690,6 +708,15 @@ def syn_task4(args, writer=None):
 
     if args.method == "attn":
         print("Method: attn")
+        model = models.GcnEncoderNode(
+            args.input_dim,
+            args.hidden_dim,
+            args.output_dim,
+            num_classes,
+            args.num_gc_layers,
+            bn=args.bn,
+            args=args,
+        )
     else:
         print("Method:", args.method)
         model = models.GcnEncoderNode(
@@ -719,6 +746,15 @@ def syn_task5(args, writer=None):
 
     if args.method == "attn":
         print("Method: attn")
+        model = models.GcnEncoderNode(
+            args.input_dim,
+            args.hidden_dim,
+            args.output_dim,
+            num_classes,
+            args.num_gc_layers,
+            bn=args.bn,
+            args=args,
+        )
     else:
         print("Method: base")
         model = models.GcnEncoderNode(

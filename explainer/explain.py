@@ -233,6 +233,8 @@ class Explainer:
             else:
                 adj_atts = nn.functional.sigmoid(adj_atts).squeeze()
                 masked_adj = adj_atts.cpu().detach().numpy() * sub_adj.squeeze()
+                adj_atts = nn.functional.sigmoid(torch.sum(adj_atts[0], dim=2)).squeeze() 
+                masked_adj = adj_atts.cpu().detach().numpy() * sub_adj.squeeze() ### fails by default on dimension mismatch
 
         fname = 'masked_adj_' + io_utils.gen_explainer_prefix(self.args) + (
                 'node_idx_'+str(node_idx)+'graph_idx_'+str(self.graph_idx)+'.npy')
