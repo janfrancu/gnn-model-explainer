@@ -47,7 +47,7 @@ def perturb(graph_list, p):
                 v = np.random.randint(0, G.number_of_nodes())
                 if (not G.has_edge(u, v)) and (u != v):
                     break
-            G.add_edge(u, v, weight=0.1, edge_type='random') ### added weight to see the random edges better
+            G.add_edge(u, v, edge_weight=0.1, edge_type='random') ### added weight to see the random edges better
         perturbed_graph_list.append(G)
     return perturbed_graph_list
 
@@ -68,7 +68,7 @@ def join_graph(G1, G2, n_pert_edges):
         ### there should not be random edges connecting motifs from the same community
         node_1 = np.random.choice(G1.nodes())
         node_2 = np.random.choice(G2.nodes())
-        F.add_edge(node_1, node_2, weight=0.1, edge_type='random') ### added weight to see the random edges better
+        F.add_edge(node_1, node_2, edge_weight=0.1, edge_type='random') ### added weight to see the random edges better
         edge_cnt += 1
     return F
 

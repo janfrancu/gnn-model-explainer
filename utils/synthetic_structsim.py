@@ -327,13 +327,13 @@ def build_graph(
             seen_shapes[shape_type] = [col_start, n_s]
         # Attach the shape to the basis
         basis.add_nodes_from(graph_s.nodes(), shape_type=shape_type,  shape_id=shape_id)                ### add vertex identification
-        basis.add_edges_from(graph_s.edges(), weight=10.0, edge_type=shape_type + '_' + str(shape_id))  ### add edge identification
-        basis.add_edges_from([(start, plugins[shape_id])], weight=2.0, edge_type='connection')
+        basis.add_edges_from(graph_s.edges(), edge_weight=10.0, edge_type=shape_type + '_' + str(shape_id))  ### add edge identification
+        basis.add_edges_from([(start, plugins[shape_id])], edge_weight=2.0, edge_type='connection')
         if shape_type == "cycle":
             if np.random.random() > 0.5:
                 a = np.random.randint(1, 4)
                 b = np.random.randint(1, 4)
-                basis.add_edges_from([(a + start, b + plugins[shape_id])], weight=0.5, edge_type='random_cycle')
+                basis.add_edges_from([(a + start, b + plugins[shape_id])], edge_weight=0.5, edge_type='random_cycle')
         temp_labels = [r + col_start for r in roles_graph_s]
         # temp_labels[0] += 100 * seen_shapes[shape_type][0]
         role_id += temp_labels
