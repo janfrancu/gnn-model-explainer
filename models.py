@@ -247,7 +247,7 @@ class GcnEncoderGraph(nn.Module):
         # out, _ = torch.max(x, dim=1)
         # out_all.append(out)
         for i in range(len(conv_block)):
-            x, _ = conv_block[i](x, adj) ### ! adj_att variable does not get updated
+            x, adj_att = conv_block[i](x, adj) ### ! adj_att variable does not get updated
             x = self.act(x)
             if self.bn:
                 x = self.apply_bn(x)
