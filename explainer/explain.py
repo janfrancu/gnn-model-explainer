@@ -6,7 +6,6 @@
 import math
 import time
 import os
-import random ### for random hash computation
 
 import matplotlib
 import matplotlib.colors as colors
@@ -382,18 +381,16 @@ class Explainer:
         precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
         acc_all = metrics.accuracy_score(real_all, pred_all > 0)
 
-        h = hex(random.getrandbits(32))
-
         plt.switch_backend("agg")
         plt.plot(recall, precision)
-        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + "_" + h + ".png")
+        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + "_seed" + str(self.args.seed) + ".png")
 
         plt.close()
 
         with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
             f.write(
-                "dataset: {}, model: {}, random: {}, auc: {}, acc: {}\n".format(
-                    self.args.dataset, "exp", h, str(auc_all), str(acc_all)
+                "dataset: {}, model: {}, seed: {}, auc: {}, acc: {}\n".format(
+                    self.args.dataset, "exp", self.args.seed, str(auc_all), str(acc_all)
                 )
             )
 
