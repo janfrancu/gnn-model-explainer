@@ -596,7 +596,7 @@ def ppi_essential_task(args, writer=None):
 def syn_task1(args, writer=None):
     # data
     G, labels, name = gengraph.gen_syn1(
-        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float))
+        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float)), seed=args.seed
     )
     num_classes = max(labels) + 1
 
@@ -630,7 +630,7 @@ def syn_task1(args, writer=None):
 
 def syn_task2(args, writer=None):
     # data
-    G, labels, name = gengraph.gen_syn2()
+    G, labels, name = gengraph.gen_syn2(seed=args.seed)
     input_dim = len(G.nodes[0]["feat"])
     num_classes = max(labels) + 1
 
@@ -665,7 +665,7 @@ def syn_task2(args, writer=None):
 def syn_task3(args, writer=None):
     # data
     G, labels, name = gengraph.gen_syn3(
-        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float))
+        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float)), seed=args.seed
     )
     print(labels)
     num_classes = max(labels) + 1
@@ -701,7 +701,7 @@ def syn_task3(args, writer=None):
 def syn_task4(args, writer=None):
     # data
     G, labels, name = gengraph.gen_syn4(
-        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float))
+        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float)), seed=args.seed
     )
     print(labels)
     num_classes = max(labels) + 1
@@ -738,7 +738,7 @@ def syn_task4(args, writer=None):
 def syn_task5(args, writer=None):
     # data
     G, labels, name = gengraph.gen_syn5(
-        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float))
+        feature_generator=featgen.ConstFeatureGen(np.ones(args.input_dim, dtype=float)), seed=args.seed
     )
     print(labels)
     print("Number of nodes: ", G.number_of_nodes())

@@ -48,6 +48,8 @@ def gen_prefix(args):
         name += "_nobias"
     if len(args.name_suffix) > 0:
         name += "_" + args.name_suffix
+
+    name += "_seed" + str(args.seed)
     return name
 
 

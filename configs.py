@@ -73,6 +73,12 @@ def arg_parse():
             help='Method. Possible values: base, ')
     parser.add_argument('--name-suffix', dest='name_suffix',
             help='suffix added to the output filename')
+    parser.add_argument(
+        "--seed",
+        dest="seed",
+        type=int,
+        help="Random seed for generation of synthetic tasks.",
+    )
 
     parser.set_defaults(datadir='data', # io_parser
                         logdir='log',
@@ -100,6 +106,7 @@ def arg_parse():
                         method='base',
                         name_suffix='',
                         assign_ratio=0.1,
+                        seed=0
                        )
     return parser.parse_args()
 

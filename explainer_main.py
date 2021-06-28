@@ -144,6 +144,13 @@ def arg_parse():
         help="suffix added to the explainer log",
     )
 
+    parser.add_argument(
+        "--seed",
+        dest="seed",
+        type=int,
+        help="Random seed for generation of synthetic tasks.",
+    )
+
     # TODO: Check argument usage
     parser.set_defaults(
         logdir="log",
@@ -170,6 +177,7 @@ def arg_parse():
         mask_act="sigmoid",
         multigraph_class=-1,
         multinode_class=-1,
+        seed=0
     )
     return parser.parse_args()
 

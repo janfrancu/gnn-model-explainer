@@ -292,7 +292,7 @@ def build_graph(
     plugins          :      node ids with the attached shapes
     """
     if basis_type == "ba":
-        basis, role_id = eval(basis_type)(start, width_basis, m=m, seed=)
+        basis, role_id = eval(basis_type)(start, width_basis, m=m, seed=seed)
     else:
         ### width is the tree depth, 8 by default for both syn4 and syn5
         basis, role_id = eval(basis_type)(start, width_basis)
