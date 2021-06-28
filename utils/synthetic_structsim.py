@@ -152,7 +152,7 @@ def fan(start, nb_branches, role_start=0):
     return graph, roles
 
 
-def ba(start, width, role_start=0, m=5):
+def ba(start, width, role_start=0, m=5, seed=0):
     """Builds a BA preferential attachment graph, with index of nodes starting at start
     and role_ids at role_start
     INPUT:
@@ -166,7 +166,7 @@ def ba(start, width, role_start=0, m=5):
     roles       :    list of the roles of the nodes (indexed starting at
                      role_start)
     """
-    graph = nx.barabasi_albert_graph(width, m)
+    graph = nx.barabasi_albert_graph(width, m, seed=seed)
     graph.add_nodes_from(range(start, start + width))
     nids = sorted(graph)
     mapping = {nid: start + i for i, nid in enumerate(nids)}
@@ -268,6 +268,7 @@ def build_graph(
     rdm_basis_plugins=False,
     add_random_edges=0,
     m=5,
+    seed=0
 ):
     """This function creates a basis (scale-free, path, or cycle)
     and attaches elements of the type in the list randomly along the basis.
@@ -291,7 +292,7 @@ def build_graph(
     plugins          :      node ids with the attached shapes
     """
     if basis_type == "ba":
-        basis, role_id = eval(basis_type)(start, width_basis, m=m)
+        basis, role_id = eval(basis_type)(start, width_basis, m=m, seed=)
     else:
         ### width is the tree depth, 8 by default for both syn4 and syn5
         basis, role_id = eval(basis_type)(start, width_basis)

@@ -84,6 +84,7 @@ def preprocess_input_graph(G, labels, normalize_adj=False):
     """
     adj = np.array(nx.to_numpy_matrix(G))
     ### normalization defaults to false when calling from train_node_classifier
+    ### no other function calls it specificaly with true
     if normalize_adj:
         sqrt_deg = np.diag(1.0 / np.sqrt(np.sum(adj, axis=0, dtype=float).squeeze()))
         adj = np.matmul(np.matmul(sqrt_deg, adj), sqrt_deg)
@@ -94,7 +95,7 @@ def preprocess_input_graph(G, labels, normalize_adj=False):
     for i, u in enumerate(G.nodes()):
         f[i, :] = G.nodes[u]["feat"]
 
-    # add batch dim
+    # add batch dim ### as the training pipeline understands only batches of graphs, even with length just one
     adj = np.expand_dims(adj, axis=0)
     f = np.expand_dims(f, axis=0)
     labels = np.expand_dims(labels, axis=0)
@@ -106,7 +107,7 @@ def preprocess_input_graph(G, labels, normalize_adj=False):
 # Generating synthetic graphs
 #
 ###################################
-def gen_syn1(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
+def gen_syn1(nb_shapes=80, width_basis=300, feature_generator=None, m=5, seed=0):
     """ Synthetic Graph #1:
 
     Start with Barabasi-Albert graph and attach house-shaped subgraphs.
@@ -127,9 +128,10 @@ def gen_syn1(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
     list_shapes = [["house"]] * nb_shapes
 
     # plt.figure(figsize=(8, 6), dpi=300)
+    np.random.seed(seed)
 
     G, role_id, _ = synthetic_structsim.build_graph(
-        width_basis, basis_type, list_shapes, start=0, m=5
+        width_basis, basis_type, list_shapes, start=0, m=5, seed=seed
     )
     G = perturb([G], 0.01)[0] ### adds 1% of new edges
 
@@ -141,7 +143,7 @@ def gen_syn1(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
     return G, role_id, name
 
 
-def gen_syn2(nb_shapes=100, width_basis=350):
+def gen_syn2(nb_shapes=100, width_basis=350, seed=0):
     """ Synthetic Graph #2:
 
     Start with Barabasi-Albert graph and add node features indicative of a community label.
@@ -160,13 +162,15 @@ def gen_syn2(nb_shapes=100, width_basis=350):
     random_mu = [0.0] * 8
     random_sigma = [1.0] * 8
 
+    np.random.seed(seed)
+
     # Create two grids
     mu_1, sigma_1 = np.array([-1.0] * 2 + random_mu), np.array([0.5] * 2 + random_sigma)
     mu_2, sigma_2 = np.array([1.0] * 2 + random_mu), np.array([0.5] * 2 + random_sigma)
     feat_gen_G1 = featgen.GaussianFeatureGen(mu=mu_1, sigma=sigma_1)
     feat_gen_G2 = featgen.GaussianFeatureGen(mu=mu_2, sigma=sigma_2)
-    G1, role_id1, name = gen_syn1(feature_generator=feat_gen_G1, m=4)
-    G2, role_id2, name = gen_syn1(feature_generator=feat_gen_G2, m=4)
+    G1, role_id1, name = gen_syn1(feature_generator=feat_gen_G1, m=4, seed=np.random.randint(1000))
+    G2, role_id2, name = gen_syn1(feature_generator=feat_gen_G2, m=4, seed=np.random.randint(1000))
     G1_size = G1.number_of_nodes()
     num_roles = max(role_id1) + 1
     role_id2 = [r + num_roles for r in role_id2]
@@ -189,7 +193,7 @@ def gen_syn2(nb_shapes=100, width_basis=350):
     return G, label, name
 
 
-def gen_syn3(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
+def gen_syn3(nb_shapes=80, width_basis=300, feature_generator=None, m=5, seed=0):
     """ Synthetic Graph #3:
 
     Start with Barabasi-Albert graph and attach grid-shaped subgraphs.
@@ -209,9 +213,10 @@ def gen_syn3(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
     list_shapes = [["grid", 3]] * nb_shapes
 
     # plt.figure(figsize=(8, 6), dpi=300)
+    np.random.seed(seed)
 
     G, role_id, _ = synthetic_structsim.build_graph(
-        width_basis, basis_type, list_shapes, start=0, m=5
+        width_basis, basis_type, list_shapes, start=0, m=5, seed=seed
     )
     G = perturb([G], 0.01)[0]
 
@@ -223,7 +228,7 @@ def gen_syn3(nb_shapes=80, width_basis=300, feature_generator=None, m=5):
     return G, role_id, name
 
 
-def gen_syn4(nb_shapes=60, width_basis=8, feature_generator=None, m=4):
+def gen_syn4(nb_shapes=60, width_basis=8, feature_generator=None, m=4, seed=0):
     """ Synthetic Graph #4:
 
     Start with a tree and attach cycle-shaped subgraphs.
@@ -243,9 +248,10 @@ def gen_syn4(nb_shapes=60, width_basis=8, feature_generator=None, m=4):
     list_shapes = [["cycle", 6]] * nb_shapes
 
     # fig = plt.figure(figsize=(8, 6), dpi=300)
+    np.random.seed(seed)
 
     G, role_id, plugins = synthetic_structsim.build_graph(
-        width_basis, basis_type, list_shapes, start=0
+        width_basis, basis_type, list_shapes, start=0, seed=seed
     )
     G = perturb([G], 0.01)[0]
 
@@ -262,7 +268,7 @@ def gen_syn4(nb_shapes=60, width_basis=8, feature_generator=None, m=4):
     return G, role_id, name
 
 
-def gen_syn5(nb_shapes=80, width_basis=8, feature_generator=None, m=3):
+def gen_syn5(nb_shapes=80, width_basis=8, feature_generator=None, m=3, seed=0):
     """ Synthetic Graph #5:
 
     Start with a tree and attach grid-shaped subgraphs.
@@ -280,11 +286,12 @@ def gen_syn5(nb_shapes=80, width_basis=8, feature_generator=None, m=3):
     """
     basis_type = "tree"
     list_shapes = [["grid", m]] * nb_shapes
+    np.random.seed(seed)
 
     # plt.figure(figsize=(8, 6), dpi=300)
 
     G, role_id, _ = synthetic_structsim.build_graph(
-        width_basis, basis_type, list_shapes, start=0
+        width_basis, basis_type, list_shapes, start=0, seed=seed
     )
     G = perturb([G], 0.1)[0]
 
