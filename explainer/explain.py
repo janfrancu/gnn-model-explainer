@@ -347,6 +347,8 @@ class Explainer:
         adjs = []
         pred_all = []
         real_all = []
+        pred_topn_all = []
+        real_topn_all = []
         for i, idx in enumerate(node_indices):
             ### extracts the up to n(=3) hops neighborhood (given by the number of convolutions-message passes)
             new_idx, adj, feat, label, neighbors = self.extract_neighborhood(idx)
@@ -360,6 +362,12 @@ class Explainer:
             pred, real = self.make_pred_real(masked_adjs[i], new_idx) 
             pred_all.append(pred)
             real_all.append(real)
+            
+            ### takes only topn edges and compares them to the 
+            pred_topn, real_topn = self.make_pred_real(masked_adjs[i], new_idx, binarize=True) 
+            pred_topn_all.append(pred_topn)
+            real_topn_all.append(real_topn)
+            
             denoised_feat = np.array([G.nodes[node]["feat"] for node in G.nodes()])
             denoised_adj = nx.to_numpy_matrix(G)
             graphs.append(G)
@@ -376,10 +384,12 @@ class Explainer:
         ### measuring auc on the mask themselves
         pred_all = np.concatenate((pred_all), axis=0)
         real_all = np.concatenate((real_all), axis=0)
+        pred_topn_all = np.concatenate((pred_topn_all), axis=0)
+        real_topn_all = np.concatenate((real_topn_all), axis=0)
 
         auc_all = roc_auc_score(real_all, pred_all)
         precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
-        acc_all = metrics.accuracy_score(real_all, pred_all > 0)
+        acc_all = metrics.accuracy_score(real_topn_all, pred_topn_all)
 
         plt.switch_backend("agg")
         plt.plot(recall, precision)
@@ -390,7 +400,7 @@ class Explainer:
         with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
             f.write(
                 "dataset: {}, model: {}, seed: {}, auc: {}, acc: {}\n".format(
-                    self.args.dataset, "exp", self.args.seed, str(auc_all), str(acc_all)
+                    self.args.dataset, model, self.args.seed, str(auc_all), str(acc_all)
                 )
             )
 
@@ -578,13 +588,13 @@ class Explainer:
 
         return P, aligned_adj, P @ curr_feat
 
-    def make_pred_real(self, adj, start):
+    def make_pred_real(self, adj, start, threshold=None, binarize=False):
         ### adj is the masked adjacency returned by training 
         ### start is the queried node index
 
         # house graph
         if self.args.dataset == "syn1" or self.args.dataset == "syn2":
-            # num_pred = max(G.number_of_edges(), 6)
+            # num_pred = max(G.number_of_edges(), 6) ### aritfact of an old piece of code
             pred = adj[np.triu(adj) > 0] ### this takes only the edges that are nonzero, disregarding the lower triangular entries
             real = adj.copy()
 
@@ -600,15 +610,32 @@ class Explainer:
                 real[start][start + 4] = 10
             if real[start + 1][start + 4]:
                 real[start + 1][start + 4] = 10
-            real = real[np.triu(real) > 0]
+            real = real[np.triu(real) > 0] ### same mask as `np.triu(adj) > 0`
             real[real != 10] = 0
             real[real == 10] = 1
+
+            if binarize == True:
+                ### take only those top edges
+                if threshold != None:
+                    n = np.maximum(np.sum(pred > threshold), 6)
+                    print("#edges {}<>6".format(n)) ### in order to know how many edges are left
+                else:
+                    n = 6
+                
+                top_edges = np.argsort(pred)[::-1][0:n]
+
+                pred[top_edges] = 10
+                pred[pred != 10] = 0
+                pred[pred == 10] = 1
+                
+                real = real[top_edges]
+                pred = pred[top_edges]
 
         # cycle graph
         elif self.args.dataset == "syn4":
             pred = adj[np.triu(adj) > 0]
             real = adj.copy()
-            # pdb.set_trace()
+
             if real[start][start + 1] > 0:
                 real[start][start + 1] = 10
             if real[start + 1][start + 2] > 0:
@@ -624,6 +651,23 @@ class Explainer:
             real = real[np.triu(real) > 0]
             real[real != 10] = 0
             real[real == 10] = 1
+
+            if binarize == True:
+                ### take only those top edges
+                if threshold != None:
+                    n = np.maximum(np.sum(pred > threshold), 6)
+                    print("#edges {}<>6".format(n)) ### in order to know how many edges are left
+                else:
+                    n = 6
+                
+                top_edges = np.argsort(pred)[::-1][0:n]
+
+                pred[top_edges] = 10
+                pred[pred != 10] = 0
+                pred[pred == 10] = 1
+                
+                real = real[top_edges]
+                pred = pred[top_edges]
 
         # grid graph
         elif self.args.dataset == "syn3" or self.args.dataset == "syn5":
@@ -676,6 +720,23 @@ class Explainer:
             real = real[np.triu(real) > 0]
             real[real != 10] = 0
             real[real == 10] = 1
+
+            if binarize == True:
+                ### take only those top edges
+                if threshold != None:
+                    n = np.maximum(np.sum(pred > threshold), 12)
+                    print("#edges {}<>12".format(n)) ### in order to know how many edges are left
+                else:
+                    n = 12
+                
+                top_edges = np.argsort(pred)[::-1][0:n]
+
+                pred[top_edges] = 10
+                pred[pred != 10] = 0
+                pred[pred == 10] = 1
+                
+                real = real[top_edges]
+                pred = pred[top_edges]
 
         else:
             raise NotImplementedError
