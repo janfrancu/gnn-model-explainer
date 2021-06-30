@@ -14,7 +14,7 @@ do
 	for s in $(seq 1 ${MAX_SEED})
 	do	
 		sbatch \
-		--output="${LOG_DIR}/${d}_${s}-%A_%a.out" \
+		--output="${LOG_DIR}/${d}_${s}_${EXP_MODEL}-%A_%a.out" \
 		./run_train_explain.sh ${d} ${EXP_MODEL} ${s}
 	done
 done
