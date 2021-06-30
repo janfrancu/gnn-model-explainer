@@ -348,6 +348,17 @@ def train_node_classifier(G, labels, model, args, writer=None):
     print(result_train["conf_mat"])
     print(result_test["conf_mat"])
 
+    ### save training evaluation to separate textfile
+    with open("log/train/stats_" + args.dataset + "_" + args.method + ".txt", "a") as f:
+        f.write(
+            "dataset: {}, model: {}, seed: {}, trn_prec: {}, tst_prec: {}, trn_recal: {}, tst_recal: {}, trn_acc: {}, tst_acc: {}\n".format(
+                args.dataset, args.method, args.seed, 
+                str(result_train["prec"]), str(result_test["prec"]), 
+                str(result_train["recall"]), str(result_test["recall"]), 
+                str(result_train["acc"]), str(result_test["acc"])
+            )
+        )
+
     # computation graph
     model.eval()
     if args.gpu:
