@@ -83,6 +83,7 @@ celerybeat-schedule
 
 # Environments
 .env
+pyenv_gnn/
 .venv
 env/
 venv/
@@ -107,6 +108,7 @@ venv.bak/
 *.sw?
 data/
 log/
+log_new/
 syn/
 ckpt/
 out/

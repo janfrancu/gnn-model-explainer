@@ -16,7 +16,7 @@ from matplotlib.figure import Figure
 import networkx as nx
 import numpy as np
 import pandas as pd
-import seaborn as sns
+# import seaborn as sns
 import tensorboardX.utils
 
 import torch
@@ -343,7 +343,7 @@ class Explainer:
 
         plt.close()
 
-        with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "w") as f:
+        with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
             f.write(
                 "dataset: {}, model: {}, auc: {}\n".format(
                     self.args.dataset, "exp", str(auc_all)
@@ -572,6 +572,54 @@ class Explainer:
                 real[start + 4][start + 5] = 10
             if real[start][start + 5]:
                 real[start][start + 5] = 10
+            real = real[np.triu(real) > 0]
+            real[real != 10] = 0
+            real[real == 10] = 1
+        
+        # grid graph
+        elif self.args.dataset == "syn3" or self.args.dataset == "syn5":
+            pred = adj[np.triu(adj) > 0]
+            real = adj.copy()
+            
+            # bottom left
+            if real[start - 1][start - 1 + 1] > 0:
+                real[start - 1][start - 1 + 1] = 10
+            if real[start - 1][start - 1 + 3] > 0:
+                real[start - 1][start - 1 + 3] = 10
+
+            # bottom middle
+            if real[start - 1 + 1][start - 1 + 2] > 0:
+                real[start - 1 + 1][start - 1 + 2] = 10
+            if real[start - 1 + 1][start - 1 + 4] > 0:
+                real[start - 1 + 1][start - 1 + 4] = 10
+
+            # bottom right
+            if real[start - 1 + 2][start - 1 + 5] > 0:
+                real[start - 1 + 2][start - 1 + 5] = 10
+            
+            # middle left
+            if real[start - 1 + 3][start - 1 + 4] > 0:
+                real[start - 1 + 3][start - 1 + 4] = 10
+            if real[start - 1 + 3][start - 1 + 6] > 0:
+                real[start - 1 + 3][start - 1 + 6] = 10
+
+            # middle middle
+            if real[start - 1 + 4][start - 1 + 5] > 0:
+                real[start - 1 + 4][start - 1 + 5] = 10
+            if real[start - 1 + 4][start - 1 + 7] > 0:
+                real[start - 1 + 4][start - 1 + 7] = 10
+
+            # top left
+            if real[start - 1 + 6][start - 1 + 7] > 0:
+                real[start - 1 + 6][start - 1 + 7] = 10
+            
+            # middle right
+            if real[start - 1 + 5][start - 1 + 8]:
+                real[start - 1 + 5][start - 1 + 8] = 10
+            # top middle
+            if real[start - 1 + 7][start - 1 + 8] > 0:
+                real[start - 1 + 7][start - 1 + 8] = 10
+            
             real = real[np.triu(real) > 0]
             real[real != 10] = 0
             real[real == 10] = 1
