@@ -328,22 +328,15 @@ class Explainer:
         auc_all = roc_auc_score(real_all, pred_all)
         precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
 
-        plt.switch_backend("agg")
-        plt.plot(recall, precision)
-        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + ".png")
-
-        plt.close()
-
-        auc_all = roc_auc_score(real_all, pred_all)
-        precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
+        outdir = "log/pr/"
+        if not os.path.isdir(outdir):
+            os.mkdir(outdir)
 
         plt.switch_backend("agg")
-        plt.plot(recall, precision)
-        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + ".png")
-
+        plt.savefig(outdir + "pr_" + self.args.dataset + "_" + model + ".png")
         plt.close()
 
-        with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
+        with open(outdir + "auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
             f.write(
                 "dataset: {}, model: {}, auc: {}\n".format(
                     self.args.dataset, "exp", str(auc_all)
