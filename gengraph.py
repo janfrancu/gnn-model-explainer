@@ -65,10 +65,9 @@ def join_graph(G1, G2, n_pert_edges):
     edge_cnt = 0
     while edge_cnt < n_pert_edges:
         ### G2 has shifted node indeces 
-        ### there should not be random edges connecting motifs from the same community
         node_1 = np.random.choice(G1.nodes())
         node_2 = np.random.choice(G2.nodes())
-        F.add_edge(node_1, node_2, edge_weight=0.1, edge_type='random') ### added weight to see the random edges better
+        F.add_edge(node_1, node_2, edge_weight=0.1, edge_type='random_join') ### added weight to see the random edges better
         edge_cnt += 1
     return F
 
@@ -183,7 +182,7 @@ def gen_syn2(nb_shapes=100, width_basis=350, seed=0):
     G2 = nx.relabel_nodes(G2, g2_map)
 
     # Join
-    ### there are no random edges added to this graph either G1 or G2
+    ### there are random edges added both G1 and G2 because we are calling `gen_syn1` with perturb inside
     ### however they are adding random edges during the join, otherwise the graphs would be independent
     n_pert_edges = width_basis
     G = join_graph(G1, G2, n_pert_edges)
