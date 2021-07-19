@@ -613,8 +613,8 @@ def syn_task1(args, writer=None):
     )
     num_classes = max(labels) + 1
 
-    if args.method == "att":
-        print("Method: att")
+    if args.method == "attn":
+        print("Method: attn")
         model = models.GcnEncoderNode(
             args.input_dim,
             args.hidden_dim,
