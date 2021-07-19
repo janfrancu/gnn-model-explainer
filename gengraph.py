@@ -175,6 +175,21 @@ def gen_syn2(nb_shapes=100, width_basis=350, seed=0):
     role_id2 = [r + num_roles for r in role_id2]
     label = role_id1 + role_id2
 
+    ### offset node and edge ids of G2, before join 
+    ### otherwise we get two motifs in the final graph with the same id
+    ### first have to figure out how many are there in G1 to offset
+    n_motifs = max([G1.nodes[n].get('shape_id', -1) for n in G1.nodes()]) + 1
+    for n in G2.nodes():
+        if 'shape_id' in G2.nodes[n]:
+            G2.nodes[n]['shape_id'] += n_motifs
+
+    for e in G2.edges():
+        if G2.edges[e]['edge_type'].startswith("house_"):
+            shape_id = int(G2.edges[e]['edge_type'].split('_')[-1]) + n_motifs
+            G2.edges[e]['edge_type'] = "house_" + str(shape_id)
+    ###
+
+
     # Edit node ids to avoid collisions on join
     g1_map = {n: i for i, n in enumerate(G1.nodes())}
     G1 = nx.relabel_nodes(G1, g1_map)
