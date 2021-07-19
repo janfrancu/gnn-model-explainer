@@ -269,9 +269,11 @@ def train_node_classifier(G, labels, model, args, writer=None):
     num_train = int(num_nodes * args.train_ratio)
     idx = [i for i in range(num_nodes)]
 
-    np.random.shuffle(idx)
+    rng = np.random.default_rng(args.seed)
+    rng.shuffle(idx)
     train_idx = idx[:num_train]
     test_idx = idx[num_train:]
+    print(train_idx[:10])
 
     ### this contains similar preprocessing as graph sampler
     data = gengraph.preprocess_input_graph(G, labels)

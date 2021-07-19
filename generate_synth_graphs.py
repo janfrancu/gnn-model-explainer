@@ -51,13 +51,32 @@ def convert_to_json(G, labels, name):
    with open(name + '.json', 'w') as file:
        file.write(json.dumps(data))
 
-# for seed in range(10):
-#    for i in range(5):
-#        fun = 'syn_task' + str(i+1)
-#        G, labels, name = eval(fun)(seed=seed)
-#        l = np.array(labels)
-#        print(np.nonzero(l > 0))
-#        convert_to_json(G, labels, 'synth_graphs/' + fun + '_' + name + '_' + str(seed+1))
+# comes from `train_node_classifier` method
+def store_traintest_split(G, train_ratio, seed):
+    num_nodes = G.number_of_nodes()
+    num_train = int(num_nodes * train_ratio)
+    idx = [i for i in range(num_nodes)]
+
+    rng = np.random.default_rng(seed)
+    rng.shuffle(idx)
+    train_idx = idx[:num_train]
+    # print(train_idx[:10])
+
+    for n in train_idx:
+        G.nodes[n]['split'] = "train"
+
+    return G
+
+
+train_ratio = 0.8
+for seed in range(10):
+   for i in range(5):
+       fun = 'syn_task' + str(i+1)
+       G, labels, name = eval(fun)(seed=seed)
+       store_traintest_split(G, train_ratio, seed)
+       l = np.array(labels)
+       # print(np.nonzero(l > 0))
+       convert_to_json(G, labels, 'synth_graphs/' + fun + '_' + name + '_' + str(seed+1))
 
 
 ### check reproducibility
