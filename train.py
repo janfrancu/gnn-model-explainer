@@ -283,9 +283,10 @@ def train_node_classifier(G, labels, model, args, writer=None):
     scheduler, optimizer = train_utils.build_optimizer(
         args, model.parameters(), weight_decay=args.weight_decay
     )
+    print("Using optimizer: ", optimizer, " scheduler: ", scheduler)
     model.train() ### set the model for training
     ypred = None
-    for epoch in range(args.num_epochs):
+    for epoch in range(args.num_epochs+1):
         begin_time = time.time()
         model.zero_grad()
 

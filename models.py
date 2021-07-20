@@ -123,6 +123,7 @@ class GcnEncoderGraph(nn.Module):
         self.act = nn.ReLU()
         self.label_dim = label_dim
 
+        torch.random.manual_seed(args.seed)
         if concat:
             self.pred_input_dim = hidden_dim * (num_layers - 1) + embedding_dim
         else:
@@ -132,7 +133,7 @@ class GcnEncoderGraph(nn.Module):
         )
 
         for m in self.modules():
-            if isinstance(m, GraphConv):
+            if isinstance(m, GraphConv): ### initializes only the graph convolution layers
                 init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain("relu"))
                 if m.att:
                     init.xavier_uniform_(
