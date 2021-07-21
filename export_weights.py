@@ -35,7 +35,7 @@ from explainer import explain
 
 ###
 
-def export_weights_and_prediction_npy(filename, model, G, labels, train_idx=None):
+def _get_model_weights(model):
     W1 = model.conv_first._parameters['weight'].detach().numpy()
     b1 = model.conv_first._parameters['bias'].detach().numpy()
     W2 = model.conv_block[0]._parameters['weight'].detach().numpy()
@@ -46,6 +46,11 @@ def export_weights_and_prediction_npy(filename, model, G, labels, train_idx=None
     Wp = model.pred_model._parameters['weight'].detach().numpy()
     bp = model.pred_model._parameters['bias'].detach().numpy()
 
+    return W1, b1, W2, b2, W3, b3, Wp, bp
+
+
+def export_weights_and_prediction_npy(filename, model, G, labels, train_idx=None):
+    W1, b1, W2, b2, W3, b3, Wp, bp = _get_model_weights(model)
 
     data = gengraph.preprocess_input_graph(G, labels)
     adj = torch.tensor(data["adj"], dtype=torch.float)
@@ -112,6 +117,9 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
         graph_idx=graph_idx,
     )
 
+    # every saved file should have these
+    W1, b1, W2, b2, W3, b3, Wp, bp = _get_model_weights(model)
+
     # mimicking Explainer.explain method to construct ExplainModule
     node_idx_new, sub_adj, sub_feat, sub_label, neighbors = explainer.extract_neighborhood(node_idx, graph_idx)
     sub_label = np.expand_dims(sub_label, axis=0)
@@ -154,7 +162,8 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
 
     np.savez(filename + "_grad", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
         pred_label=pred_label, ypred=ypred, sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
-        masked_adj=masked_adj, feat_mask=feat_mask)
+        masked_adj=masked_adj, feat_mask=feat_mask,
+        W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp)
 
     ### explainer's loss and gradient (first iteration output only)
     # what do we need for the loss computation
@@ -178,14 +187,12 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
    
     masked_adj = explain_module.masked_adj.detach().numpy()
 
-
     np.savez(filename + "_exp", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
         loss=loss, ypred=ypred, pred_label=pred_label,
         sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
         masked_adj=masked_adj, edge_mask=edge_mask, feat_mask=feat_mask, 
-        grad_edge_mask=grad_edge_mask, grad_feat_mask=grad_feat_mask)
-
-
+        grad_edge_mask=grad_edge_mask, grad_feat_mask=grad_feat_mask,
+        W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp)
 
 def syn_task1(args, writer=None):
     # data
