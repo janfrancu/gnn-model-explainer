@@ -152,9 +152,9 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
     explain_module.zero_grad()
     adj_grad, feat_grad = explain_module.adj_feat_grad(node_idx_new, pred_label[node_idx_new])
     adj_grad = torch.abs(adj_grad)[graph_idx]
-    masked_adj = adj_grad + adj_grad.t()
-    masked_adj = nn.functional.sigmoid(masked_adj)
-    masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze()
+    edge_mask = adj_grad + adj_grad.t()
+    edge_mask = nn.functional.sigmoid(edge_mask)
+    edge_mask = edge_mask.cpu().detach().numpy() * sub_adj.squeeze()
     feat_mask = feat_grad.detach().numpy()
 
     ypred, _ = model(x, adj) # prediction on the subgraph, used for further checks
@@ -162,7 +162,7 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
 
     np.savez(filename + "_grad", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
         pred_label=pred_label, ypred=ypred, sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
-        masked_adj=masked_adj, feat_mask=feat_mask,
+        edge_mask=edge_mask, feat_mask=feat_mask,
         W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp)
 
     ### explainer's loss and gradient (first iteration output only)
@@ -176,23 +176,36 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
     loss = explain_module.loss(ypred, pred_label, node_idx_new, 0)
     loss.backward()
 
-    edge_mask = explain_module._parameters['mask'].detach().numpy()
-    feat_mask = explain_module._parameters['feat_mask'].detach().numpy()
-    loss = loss.detach().numpy()
+    edge_mask_init = explain_module._parameters['mask'].detach().numpy().copy()
+    feat_mask_init = explain_module._parameters['feat_mask'].detach().numpy().copy()
+    loss = loss.detach().numpy().copy()
 
-    grad_edge_mask = explain_module._parameters['mask'].grad.numpy()
-    grad_feat_mask = explain_module._parameters['feat_mask'].grad.numpy()
+    grad_edge_mask_init = explain_module._parameters['mask'].grad.numpy().copy()
+    grad_feat_mask_init = explain_module._parameters['feat_mask'].grad.numpy().copy()
 
-    ypred = ypred.detach().numpy()
+    ypred = ypred.detach().numpy().copy()
    
-    masked_adj = explain_module.masked_adj.detach().numpy()
+    masked_adj_init = explain_module._masked_adj().detach().numpy().copy()
+
+    # optimize the weights for 100 iters
+    for epoch in range(100):
+        explain_module.zero_grad()
+        explain_module.optimizer.zero_grad()
+        _ypred, _adj_atts = explain_module(node_idx_new, unconstrained=unconstrained)
+        _loss = explain_module.loss(_ypred, pred_label, node_idx_new, epoch)
+        _loss.backward()
+        explain_module.optimizer.step()
+
+    masked_adj_trained = explain_module._masked_adj().detach().numpy().copy()
 
     np.savez(filename + "_exp", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
         loss=loss, ypred=ypred, pred_label=pred_label,
         sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
-        masked_adj=masked_adj, edge_mask=edge_mask, feat_mask=feat_mask, 
-        grad_edge_mask=grad_edge_mask, grad_feat_mask=grad_feat_mask,
+        masked_adj_trained=masked_adj_trained, masked_adj_init=masked_adj_init, 
+        edge_mask_init=edge_mask_init, feat_mask_init=feat_mask_init,
+        grad_edge_mask_init=grad_edge_mask_init, grad_feat_mask_init=grad_feat_mask_init,
         W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp)
+
 
 def syn_task1(args, writer=None):
     # data
