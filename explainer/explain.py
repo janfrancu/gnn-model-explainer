@@ -819,7 +819,7 @@ class ExplainModule(nn.Module):
         elif init_strategy == "const":
             nn.init.constant_(mask, const_val)
 
-        if self.args.mask_bias:
+        if self.args.mask_bias: ### does not get initialized as mask_bias defaults to false
             mask_bias = nn.Parameter(torch.FloatTensor(num_nodes, num_nodes))
             nn.init.constant_(mask_bias, 0.0)
         else:
@@ -840,7 +840,7 @@ class ExplainModule(nn.Module):
             bias = (self.mask_bias + self.mask_bias.t()) / 2
             bias = nn.ReLU6()(bias * 6) / 6
             masked_adj += (bias + bias.t()) / 2
-        return masked_adj * self.diag_mask
+        return masked_adj * self.diag_mask ### zeroing of diagonal is not needed as args.mask_bias is False by default
 
     def mask_density(self):
         mask_sum = torch.sum(self._masked_adj()).cpu()
@@ -856,7 +856,7 @@ class ExplainModule(nn.Module):
                 torch.unsqueeze((sym_mask + sym_mask.t()) / 2, 0) * self.diag_mask
             )
         else: ### default is constrained
-            self.masked_adj = self._masked_adj()
+            self.masked_adj = self._masked_adj() ### sigmoid -> symetrization -> * adj_matrix
             if mask_features:
                 feat_mask = (
                     torch.sigmoid(self.feat_mask)
@@ -908,6 +908,7 @@ class ExplainModule(nn.Module):
             pred: prediction made by current model
             pred_label: the label predicted by the original model.
         """
+        # print("pred  ", pred.detach())
         mi_obj = False ### that is a nice piece of code
         if mi_obj:
             pred_loss = -torch.sum(pred * torch.log(pred))
@@ -922,13 +923,13 @@ class ExplainModule(nn.Module):
             mask = torch.sigmoid(self.mask)
         elif self.mask_act == "ReLU":
             mask = nn.ReLU()(self.mask)
-        size_loss = self.coeffs["size"] * torch.sum(mask) ### l1 loss with some default param 0.005
+        size_loss = self.coeffs["size"] * torch.sum(mask) ### l1 loss with some default param 0.005, why just sum here?
 
         # pre_mask_sum = torch.sum(self.feat_mask)
         feat_mask = (
             torch.sigmoid(self.feat_mask) if self.use_sigmoid else self.feat_mask
         )
-        feat_size_loss = self.coeffs["feat_size"] * torch.mean(feat_mask) ### l1 loss over feature mask * 1.0
+        feat_size_loss = self.coeffs["feat_size"] * torch.mean(feat_mask) ### l1 loss over feature mask * 1.0, why the mean here?
 
         # entropy
         mask_ent = -mask * torch.log(mask) - (1 - mask) * torch.log(1 - mask)
@@ -942,7 +943,7 @@ class ExplainModule(nn.Module):
         feat_mask_ent_loss = self.coeffs["feat_ent"] * torch.mean(feat_mask_ent)
 
         # laplacian
-        D = torch.diag(torch.sum(self.masked_adj[0], 0))
+        D = torch.diag(torch.sum(self.masked_adj[0], 0))  ### diagonal matrix created from the sum over rows
         m_adj = self.masked_adj if self.graph_mode else self.masked_adj[self.graph_idx]
         L = D - m_adj
         pred_label_t = torch.tensor(pred_label, dtype=torch.float)
@@ -971,6 +972,13 @@ class ExplainModule(nn.Module):
         # grad_feat_loss = self.coeffs['featgrad'] * -torch.mean(x_grad_sum * mask)
 
         loss = pred_loss + size_loss + lap_loss + mask_ent_loss + feat_size_loss
+        # print("{:.4f} {:.4f} {:.4f} {:.4f} {:.4f} {:.4f} -> {:.4f}".format(pred_loss.detach().item(), 
+        #     size_loss.detach().item(), 
+        #     feat_size_loss.detach().item(),
+        #     mask_ent_loss.detach().item(), 
+        #     feat_mask_ent_loss.detach().item(), 
+        #     lap_loss.detach().item(),
+        #     loss.detach().item()))
         if self.writer is not None:
             self.writer.add_scalar("optimization/size_loss", size_loss, epoch)
             self.writer.add_scalar("optimization/feat_size_loss", feat_size_loss, epoch)
