@@ -167,7 +167,7 @@ def arg_parse():
         output_dim=20,
         num_gc_layers=3,
         dropout=0.0,
-        method="base",
+        method="exp",
         model="exp",
         name_suffix="",
         explainer_suffix="",

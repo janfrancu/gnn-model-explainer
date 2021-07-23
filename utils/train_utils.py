@@ -8,6 +8,8 @@ def build_optimizer(args, params, weight_decay=0.0):
     filter_fn = filter(lambda p : p.requires_grad, params)
     if args.opt == 'adam':
         optimizer = optim.Adam(filter_fn, lr=args.lr, weight_decay=weight_decay)
+    elif args.opt == 'adamw':
+        optimizer = optim.AdamW(filter_fn, lr=args.lr, weight_decay=weight_decay)
     elif args.opt == 'sgd':
         optimizer = optim.SGD(filter_fn, lr=args.lr, momentum=0.95, weight_decay=weight_decay)
     elif args.opt == 'rmsprop':
