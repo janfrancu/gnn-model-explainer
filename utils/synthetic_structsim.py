@@ -299,7 +299,7 @@ def build_graph(
 
     # set edge weights in basis graph
     for e in basis.edges:
-        basis.edges[e]['weight'] = 1.0
+        basis.edges[e]['edge_weight'] = 1.0
         basis.edges[e]['edge_type'] = 'basis'
 
     n_basis, n_shapes = nx.number_of_nodes(basis), len(list_shapes)
