@@ -286,7 +286,7 @@ def train_node_classifier(G, labels, model, args, writer=None):
     print("Using optimizer: ", optimizer, " scheduler: ", scheduler)
     model.train() ### set the model for training
     ypred = None
-    for epoch in range(args.num_epochs+1):
+    for epoch in range(args.num_epochs):
         begin_time = time.time()
         model.zero_grad()
 
@@ -378,6 +378,7 @@ def train_node_classifier(G, labels, model, args, writer=None):
     # import pdb
     # pdb.set_trace()
     io_utils.save_checkpoint(model, optimizer, args, num_epochs=-1, cg_dict=cg_data)
+    return cg_data
 
 
 def train_node_classifier_multigraph(G_list, labels, model, args, writer=None):
