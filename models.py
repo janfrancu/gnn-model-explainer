@@ -104,7 +104,7 @@ class GcnEncoderGraph(nn.Module):
 
         self.bias = True
         self.gpu = args.gpu
-        if args.method == "att":
+        if args.method == "attn":
             self.att = True
         else:
             self.att = False
