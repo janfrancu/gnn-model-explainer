@@ -205,30 +205,31 @@ class Explainer:
                             # there should be probably graph_idx instead of 0
                             # summing over gc layers -> num_nodes x num_nodes matrix
                             ### 
-                            adj_att = torch.sum(adj_atts[0], dim=2) 
+                            adj_att = torch.sum(adj_atts, dim=3) 
                             # adj_att = adj_att[neighbors][:, neighbors]
-                            node_adj_att = adj_att * adj.float().cuda() 
+                            node_adj_att = adj_att * adj
                             ### adj is the original true sub_adj matrix of the neighborhood graph
                             ### only for output here, 
                             io_utils.log_matrix(
                                 self.writer, node_adj_att[0], "att/matrix", epoch
                             )
                             node_adj_att = node_adj_att[0].cpu().detach().numpy()
-                            G = io_utils.denoise_graph(
-                                node_adj_att,
-                                node_idx_new,
-                                threshold=3.8,  # threshold_num=20, ### magic constants
-                                max_component=True,
-                            )
-                            io_utils.log_graph(
-                                self.writer,
-                                G,
-                                name="att/graph",
-                                identify_self=not self.graph_mode,
-                                nodecolor="label",
-                                edge_vmax=None,
-                                args=self.args,
-                            )
+                            # G = io_utils.denoise_graph(
+                            #     node_adj_att,
+                            #     node_idx_new,
+                            #     threshold=3.8,  # 
+                            #     threshold_num=20, ### magic constants
+                            #     max_component=True,
+                            # )
+                            # io_utils.log_graph(
+                            #     self.writer,
+                            #     G,
+                            #     name="att/graph",
+                            #     identify_self=not self.graph_mode,
+                            #     nodecolor="label",
+                            #     edge_vmax=None,
+                            #     args=self.args,
+                            # )
                             ### there is no way how to output adj_att as the result from here
 
                 if model != "exp":
@@ -706,16 +707,13 @@ class Explainer:
             if real[start - 1 + 6][start - 1 + 7] > 0:
                 real[start - 1 + 6][start - 1 + 7] = 10
             
-            ### (only if the neighborhood contains the top right vertex)
-            try:
-                # middle right
-                if real[start - 1 + 5][start - 1 + 8]:
-                    real[start - 1 + 5][start - 1 + 8] = 10
-                # top middle
-                if real[start - 1 + 7][start - 1 + 8] > 0:
-                    real[start - 1 + 7][start - 1 + 8] = 10
-            except:
-                pass
+            # middle right
+            if real[start - 1 + 5][start - 1 + 8]:
+                real[start - 1 + 5][start - 1 + 8] = 10
+            # top middle
+            if real[start - 1 + 7][start - 1 + 8] > 0:
+                real[start - 1 + 7][start - 1 + 8] = 10
+            
 
             real = real[np.triu(real) > 0]
             real[real != 10] = 0
