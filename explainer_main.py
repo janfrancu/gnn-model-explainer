@@ -151,6 +151,15 @@ def arg_parse():
         help="Random seed for generation of synthetic tasks.",
     )
 
+    parser.add_argument(
+        "--explain-all",
+        dest="explain_all",
+        action="store_const",
+        const=True,
+        default=False,
+        help="Whether to explain both train/test split (true) or just the test split (false)"
+    )
+
     # TODO: Check argument usage
     parser.set_defaults(
         logdir="log",
@@ -323,29 +332,30 @@ def main():
 
         else: ### this is run by default, modified to be able to evaluate all the examples
             # explain a set of nodes
+            explain_all = prog_args.explain_all
             if prog_args.dataset == "syn1":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(300, 700, 5) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
+                    [i for i in range(300, 700, 5) if explain_all or i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn2":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in list(range(300, 700, 5)) + list(range(1000, 1400, 5)) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
+                    [i for i in list(range(300, 700, 5)) + list(range(1000, 1400, 5)) if explain_all or i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn3":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(301, 1019, 9) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
+                    [i for i in range(301, 1019, 9) if explain_all or i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn4":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(511, 870, 6) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
+                    [i for i in range(511, 870, 6) if explain_all or i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
             elif prog_args.dataset == "syn5":
                 masked_adj = explainer.explain_nodes_gnn_stats(
-                    [i for i in range(512, 1230, 9) if i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
+                    [i for i in range(512, 1230, 9) if explain_all or i not in cg_dict["train_idx"]], prog_args, model=prog_args.model
                 )
 
 if __name__ == "__main__":
