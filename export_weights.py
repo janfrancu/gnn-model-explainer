@@ -46,11 +46,20 @@ def _get_model_weights(model):
     Wp = model.pred_model._parameters['weight'].detach().numpy()
     bp = model.pred_model._parameters['bias'].detach().numpy()
 
-    return W1, b1, W2, b2, W3, b3, Wp, bp
+    if model.att:
+        attention_w = {
+            "Wa1" : model.conv_first._parameters['att_weight'].detach().numpy(),
+            "Wa2" : model.conv_block[0]._parameters['att_weight'].detach().numpy(),
+            "Wa3" : model.conv_last._parameters['att_weight'].detach().numpy(),
+        }
+        return W1, b1, W2, b2, W3, b3, Wp, bp, attention_w
+    else:
+        return W1, b1, W2, b2, W3, b3, Wp, bp, {}
+
 
 
 def export_weights_and_prediction_npy(filename, model, G, labels, train_idx=None):
-    W1, b1, W2, b2, W3, b3, Wp, bp = _get_model_weights(model)
+    W1, b1, W2, b2, W3, b3, Wp, bp, attention_w = _get_model_weights(model)
 
     data = gengraph.preprocess_input_graph(G, labels)
     adj = torch.tensor(data["adj"], dtype=torch.float)
@@ -72,6 +81,12 @@ def export_weights_and_prediction_npy(filename, model, G, labels, train_idx=None
 
     gWp = model.pred_model._parameters['weight'].grad.numpy()
     gbp = model.pred_model._parameters['bias'].grad.numpy()
+
+    attention_gw = {
+        "gWa1" : model.conv_first._parameters['att_weight'].grad.numpy(),
+        "gWa2" : model.conv_block[0]._parameters['att_weight'].grad.numpy(),
+        "gWa3" : model.conv_last._parameters['att_weight'].grad.numpy(),
+    } if model.att else {}
     
 
     loss = loss.detach().numpy()
@@ -85,15 +100,15 @@ def export_weights_and_prediction_npy(filename, model, G, labels, train_idx=None
                            b1=b1, b2=b2, b3=b3, bp=bp,
                            gW1=gW1, gW2=gW2, gW3=gW3, gWp=gWp, 
                            gb1=gb1, gb2=gb2, gb3=gb3, gbp=gbp,  
-                           adj=adj, x=x, ypred=ypred, 
-                           labels=labels, loss=loss, train_idx=np.array(train_idx))
+                           adj=adj, x=x, ypred=ypred, adj_att=adj_att,
+                           labels=labels, loss=loss, train_idx=np.array(train_idx), **attention_w, **attention_gw)
     else:
         np.savez(filename, W1=W1, W2=W2, W3=W3, Wp=Wp, 
                            b1=b1, b2=b2, b3=b3, bp=bp,
                            gW1=gW1, gW2=gW2, gW3=gW3, gWp=gWp, 
                            gb1=gb1, gb2=gb2, gb3=gb3, gbp=gbp,  
-                           adj=adj, x=x, ypred=ypred, 
-                           labels=labels, loss=loss)
+                           adj=adj, x=x, ypred=ypred, adj_att=adj_att, 
+                           labels=labels, loss=loss, **attention_w, **attention_gw)
 
 
 def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
@@ -118,7 +133,7 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
     )
 
     # every saved file should have these
-    W1, b1, W2, b2, W3, b3, Wp, bp = _get_model_weights(model)
+    W1, b1, W2, b2, W3, b3, Wp, bp, attention_w = _get_model_weights(model)
 
     # mimicking Explainer.explain method to construct ExplainModule
     node_idx_new, sub_adj, sub_feat, sub_label, neighbors = explainer.extract_neighborhood(node_idx, graph_idx)
@@ -163,7 +178,24 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
     np.savez(filename + "_grad", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
         pred_label=pred_label, ypred=ypred, sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
         edge_mask=edge_mask, feat_mask=feat_mask,
-        W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp)
+        W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp, **attention_w)
+
+    ### attention method if a model with attention has been given
+    # export this before explainer, because the way this implemented uses
+    # the explain module and initialized masks
+    if args.method == "attn":
+        ypred, adj_atts = explain_module(node_idx_new, unconstrained=unconstrained)
+        adj_att = nn.functional.sigmoid(torch.sum(adj_atts[0], dim=2)).squeeze() 
+        masked_adj = adj_att.detach().numpy() * sub_adj.squeeze()
+
+        ypred = ypred.detach().numpy()
+        adj_atts = adj_atts.detach().numpy()
+
+        np.savez(filename + "_attn", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
+            adj_atts=adj_atts, ypred=ypred,
+            sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
+            masked_adj=masked_adj, 
+            W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp, **attention_w)
 
     ### explainer's loss and gradient (first iteration output only)
     # what do we need for the loss computation
@@ -204,7 +236,7 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
         masked_adj_trained=masked_adj_trained, masked_adj_init=masked_adj_init, 
         edge_mask_init=edge_mask_init, feat_mask_init=feat_mask_init,
         grad_edge_mask_init=grad_edge_mask_init, grad_feat_mask_init=grad_feat_mask_init,
-        W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp)
+        W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp, **attention_w)
 
 
 def syn_task1(args, writer=None):
@@ -224,13 +256,13 @@ def syn_task1(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn1:{}_init".format(args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./log/model_export/syn1:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn1:{}_trained".format(args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./log/model_export/syn1:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 300
-    export_explainer_weights("./log/model_export/syn1:{}_explain".format(args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./log/model_export/syn1:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task2(args, writer=None):
@@ -249,13 +281,13 @@ def syn_task2(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn2:{}_init".format(args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./log/model_export/syn2:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn2:{}_trained".format(args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./log/model_export/syn2:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 300
-    export_explainer_weights("./log/model_export/syn2:{}_explain".format(args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./log/model_export/syn2:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task3(args, writer=None):
@@ -276,13 +308,13 @@ def syn_task3(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn3:{}_init".format(args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./log/model_export/syn3:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn3:{}_trained".format(args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./log/model_export/syn3:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 301
-    export_explainer_weights("./log/model_export/syn3:{}_explain".format(args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./log/model_export/syn3:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task4(args, writer=None):
@@ -303,14 +335,13 @@ def syn_task4(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn4:{}_init".format(args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./log/model_export/syn4:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn4:{}_trained".format(args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./log/model_export/syn4:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 511
-    export_explainer_weights("./log/model_export/syn4:{}_explain".format(args.seed), args.seed, node_idx, cg_dict, model)
-
+    export_explainer_weights("./log/model_export/syn4:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task5(args, writer=None):
@@ -332,20 +363,22 @@ def syn_task5(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn5:{}_init".format(args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./log/model_export/syn5:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn5:{}_trained".format(args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./log/model_export/syn5:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 512
-    export_explainer_weights("./log/model_export/syn5:{}_explain".format(args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./log/model_export/syn5:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 # the data should be the same - export the adjacency matrix and others
 args = prog_args = configs.arg_parse()
 
-for seed in range(5):
-    prog_args.seed = seed
-    for i in range(5):
-       fun = 'syn_task' + str(i+1)
-       eval(fun)(prog_args)
+for method in ["base", "attn"]:
+    prog_args.method = method
+    for seed in range(5):
+        prog_args.seed = seed
+        for i in range(5):
+            fun = 'syn_task' + str(i+1)
+            eval(fun)(prog_args)
