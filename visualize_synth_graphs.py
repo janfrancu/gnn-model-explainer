@@ -35,7 +35,7 @@ def export_gexf(G, labels, name):
       del G.nodes[i]['feat']
       G.nodes[i]['ytrue'] = int(l)
 
-    write_gexf(G, './dump/sample_' + fun + '_' + name + '.gexf')
+    write_gexf(G, './dump/sample_' + fun + '_' + name + '_0.gexf')
 
 for i in range(5):
   fun = 'syn_task' + str(i+1)

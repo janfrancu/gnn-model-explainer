@@ -76,7 +76,7 @@ for seed in range(10):
        store_traintest_split(G, train_ratio, seed)
        l = np.array(labels)
        # print(np.nonzero(l > 0))
-       convert_to_json(G, labels, 'synth_graphs/' + fun + '_' + name + '_' + str(seed+1))
+       convert_to_json(G, labels, 'synth_graphs/' + fun + '_' + name + '_' + str(seed))
 
 
 ### check reproducibility
