@@ -254,13 +254,13 @@ def syn_task1(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn1:{}_{}_init".format(args.method, args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./model_export/syn1:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn1:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./model_export/syn1:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 300
-    export_explainer_weights("./log/model_export/syn1:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./model_export/syn1:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task2(args, writer=None):
@@ -279,13 +279,13 @@ def syn_task2(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn2:{}_{}_init".format(args.method, args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./model_export/syn2:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn2:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./model_export/syn2:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 300
-    export_explainer_weights("./log/model_export/syn2:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./model_export/syn2:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task3(args, writer=None):
@@ -306,13 +306,13 @@ def syn_task3(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn3:{}_{}_init".format(args.method, args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./model_export/syn3:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn3:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./model_export/syn3:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 301
-    export_explainer_weights("./log/model_export/syn3:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./model_export/syn3:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task4(args, writer=None):
@@ -333,13 +333,13 @@ def syn_task4(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn4:{}_{}_init".format(args.method, args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./model_export/syn4:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn4:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./model_export/syn4:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 511
-    export_explainer_weights("./log/model_export/syn4:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./model_export/syn4:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
 
 def syn_task5(args, writer=None):
@@ -361,14 +361,17 @@ def syn_task5(args, writer=None):
         args=args,
     )
 
-    export_weights_and_prediction_npy("./log/model_export/syn5:{}_{}_init".format(args.method, args.seed), model, G, labels)
+    export_weights_and_prediction_npy("./model_export/syn5:{}_{}_init".format(args.method, args.seed), model, G, labels)
 
     cg_dict = train_node_classifier(G, labels, model, args, writer=writer)
-    export_weights_and_prediction_npy("./log/model_export/syn5:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
+    export_weights_and_prediction_npy("./model_export/syn5:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 512
-    export_explainer_weights("./log/model_export/syn5:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    export_explainer_weights("./model_export/syn5:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
 
+outdir = "./model_export"
+if not os.path.isdir(outdir):
+    os.mkdir(outdir)
 
 # the data should be the same - export the adjacency matrix and others
 args = prog_args = configs.arg_parse()
