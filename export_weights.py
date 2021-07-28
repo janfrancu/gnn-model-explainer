@@ -181,10 +181,8 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
         W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp, **attention_w)
 
     ### attention method if a model with attention has been given
-    # export this before explainer, because the way this implemented uses
-    # the explain module and initialized masks
     if args.method == "attn":
-        ypred, adj_atts = explain_module(node_idx_new, unconstrained=unconstrained)
+        ypred, adj_atts = model(x, adj)
         adj_att = nn.functional.sigmoid(torch.sum(adj_atts[0], dim=2)).squeeze() 
         masked_adj = adj_att.detach().numpy() * sub_adj.squeeze()
 

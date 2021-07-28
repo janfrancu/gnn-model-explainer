@@ -138,7 +138,7 @@ class Explainer:
             masked_adj = adj_grad + adj_grad.t()
             masked_adj = nn.functional.sigmoid(masked_adj)
             masked_adj = masked_adj.cpu().detach().numpy() * sub_adj.squeeze() ### multiply by the true adjacency to mask other edges
-        else: ### this is run in case of explain node stats where by default model="exp"
+        elif model == "exp":
             explainer.train() ### switching to training mode
             begin_time = time.time()
             for epoch in range(self.args.num_epochs): ### 100 by default
@@ -196,60 +196,17 @@ class Explainer:
                             node_idx_new, pred_label, epoch, label=single_subgraph_label
                         )
 
-                    if epoch == 0:
-                        if self.model.att: ### explanation with attention
-                            # explain node
-                            print("adj att size: ", adj_atts.size())
-                            ### 
-                            # adj_atts: [batch_size x num_nodes x num_nodes x num_gc_layers]
-                            # there should be probably graph_idx instead of 0
-                            # summing over gc layers -> num_nodes x num_nodes matrix
-                            ### 
-                            adj_att = torch.sum(adj_atts, dim=3) 
-                            # adj_att = adj_att[neighbors][:, neighbors]
-                            node_adj_att = adj_att * adj
-                            ### adj is the original true sub_adj matrix of the neighborhood graph
-                            ### only for output here, 
-                            io_utils.log_matrix(
-                                self.writer, node_adj_att[0], "att/matrix", epoch
-                            )
-                            node_adj_att = node_adj_att[0].cpu().detach().numpy()
-                            # G = io_utils.denoise_graph(
-                            #     node_adj_att,
-                            #     node_idx_new,
-                            #     threshold=3.8,  # 
-                            #     threshold_num=20, ### magic constants
-                            #     max_component=True,
-                            # )
-                            # io_utils.log_graph(
-                            #     self.writer,
-                            #     G,
-                            #     name="att/graph",
-                            #     identify_self=not self.graph_mode,
-                            #     nodecolor="label",
-                            #     edge_vmax=None,
-                            #     args=self.args,
-                            # )
-                            ### there is no way how to output adj_att as the result from here
-
-                if model != "exp":
-                    break
-
             print("finished training in ", time.time() - begin_time)
             ### multiply by the true adjacency to mask other edges
-            if model == "exp":
-                masked_adj = (
-                    explainer.masked_adj[0].cpu().detach().numpy() * sub_adj.squeeze()
-                )
-            else: 
-                ### 
-                # this branch is followed when model != exp && model != grad (probably the attention model)
-                # adj_atts: [batch_size x num_nodes x num_nodes x num_gc_layers]
-                # sub_adj: [1 x num_nodes x num_nodes]
-                # there should be probably that `adj_att` matrix from above
-                ### 
-                adj_atts = nn.functional.sigmoid(torch.sum(adj_atts[0], dim=2)).squeeze() 
-                masked_adj = adj_atts.cpu().detach().numpy() * sub_adj.squeeze() ### fails by default on dimension mismatch
+            masked_adj = (explainer.masked_adj[0].cpu().detach().numpy() * sub_adj.squeeze())
+        elif model == "attn":
+            ### attention explanation used to run ExplainModule with 1 iteration on weights
+            ### but instead it should use the model directly
+            ypred, adj_atts = self.model(x, adj)
+            adj_atts = nn.functional.sigmoid(torch.sum(adj_atts[0], dim=2)).squeeze() 
+            masked_adj = adj_atts.cpu().detach().numpy() * sub_adj.squeeze()
+        else:
+            raise NotImplementedError
 
         fname = 'masked_adj_' + io_utils.gen_explainer_prefix(self.args) + (
                 'node_idx_'+str(node_idx)+'graph_idx_'+str(self.graph_idx)+'.npy')
