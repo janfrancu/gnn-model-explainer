@@ -221,7 +221,7 @@ def denoise_graph(adj, node_idx, feat=None, label=None, threshold=None, threshol
         #adj += np.random.rand(adj.shape[0], adj.shape[1]) * 1e-4
         neigh_size = len(adj[adj > 0])
         threshold_num = min(neigh_size, adj_threshold_num)
-        threshold = np.sort(adj[adj > 0])[-threshold_num]
+        threshold = np.sort(adj[adj > 0])[-threshold_num] ### !! this threshold can be the lowest nonzero score in the adjacecny matrix
 
     if threshold is not None: ### this branch as threshold is computed using threshold_num
         weighted_edge_list = [

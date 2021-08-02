@@ -583,7 +583,7 @@ class Explainer:
                     print("#edges {}<>6".format(n)) ### in order to know how many edges are left
                 else:
                     n = 6
-                
+                ### !! can be ambiguous due to equalities just at the nth edge score
                 top_edges = np.argsort(pred)[::-1][0:n]
 
                 pred[top_edges] = 10
@@ -608,7 +608,7 @@ class Explainer:
                 real[start + 3][start + 4] = 10
             if real[start + 4][start + 5] > 0:
                 real[start + 4][start + 5] = 10
-            if real[start][start + 5]:
+            if real[start][start + 5] > 0:
                 real[start][start + 5] = 10
             real = real[np.triu(real) > 0]
             real[real != 10] = 0
@@ -621,7 +621,7 @@ class Explainer:
                     print("#edges {}<>6".format(n)) ### in order to know how many edges are left
                 else:
                     n = 6
-                
+                ### !! can be ambiguous due to equalities just at the nth edge score
                 top_edges = np.argsort(pred)[::-1][0:n]
 
                 pred[top_edges] = 10
@@ -669,7 +669,7 @@ class Explainer:
                 real[start - 1 + 6][start - 1 + 7] = 10
             
             # middle right
-            if real[start - 1 + 5][start - 1 + 8]:
+            if real[start - 1 + 5][start - 1 + 8] > 0:
                 real[start - 1 + 5][start - 1 + 8] = 10
             # top middle
             if real[start - 1 + 7][start - 1 + 8] > 0:
@@ -687,7 +687,7 @@ class Explainer:
                     print("#edges {}<>12".format(n)) ### in order to know how many edges are left
                 else:
                     n = 12
-                
+                ### !! can be ambiguous due to equalities just at the nth edge score
                 top_edges = np.argsort(pred)[::-1][0:n]
 
                 pred[top_edges] = 10
