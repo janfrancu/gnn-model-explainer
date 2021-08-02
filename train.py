@@ -352,6 +352,10 @@ def train_node_classifier(G, labels, model, args, writer=None):
     print(result_test["conf_mat"])
 
     ### save training evaluation to separate textfile
+    outdir = "log/train/"
+    if not os.path.isdir(outdir):
+        os.makedirs(outdir)
+
     with open("log/train/stats_" + args.dataset + "_" + args.method + ".txt", "a") as f:
         f.write(
             "dataset: {}, model: {}, seed: {}, trn_prec: {}, tst_prec: {}, trn_recal: {}, tst_recal: {}, trn_acc: {}, tst_acc: {}\n".format(

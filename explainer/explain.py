@@ -349,13 +349,17 @@ class Explainer:
         precision, recall, thresholds = precision_recall_curve(real_all, pred_all)
         acc_all = metrics.accuracy_score(real_topn_all, pred_topn_all)
 
+        outdir = "log/pr/"
+        if not os.path.isdir(outdir):
+            os.makedirs(outdir)
+
         plt.switch_backend("agg")
         plt.plot(recall, precision)
-        plt.savefig("log/pr/pr_" + self.args.dataset + "_" + model + "_seed" + str(self.args.seed) + ".png")
+        plt.savefig(outdir + "pr_" + self.args.dataset + "_" + model + "_seed" + str(self.args.seed) + ".png")
 
         plt.close()
 
-        with open("log/pr/auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
+        with open(outdir + "auc_" + self.args.dataset + "_" + model + ".txt", "a") as f:
             f.write(
                 "dataset: {}, model: {}, seed: {}, auc: {}, acc: {}\n".format(
                     self.args.dataset, model, self.args.seed, str(auc_all), str(acc_all)

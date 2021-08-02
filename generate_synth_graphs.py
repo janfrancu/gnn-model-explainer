@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import gengraph
 import utils.featgen as featgen
@@ -68,8 +69,12 @@ def store_traintest_split(G, train_ratio, seed):
     return G
 
 
+outdir = "./synth_graphs"
+if not os.path.isdir(outdir):
+    os.mkdir(outdir)
+
 train_ratio = 0.8
-for seed in range(10):
+for seed in range(20):
    for i in range(5):
        fun = 'syn_task' + str(i+1)
        G, labels, name = eval(fun)(seed=seed)
