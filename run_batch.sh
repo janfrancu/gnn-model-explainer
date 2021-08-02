@@ -11,7 +11,7 @@ datasets=("syn1" "syn2" "syn3" "syn4" "syn5")
 
 for d in ${datasets[*]}
 do
-	for s in $(seq 1 ${MAX_SEED})
+	for s in $(seq 0 ${MAX_SEED-1})
 	do	
 		sbatch \
 		--output="${LOG_DIR}/${d}_${s}_${EXP_MODEL}-%A_%a.out" \

@@ -111,12 +111,15 @@ def export_weights_and_prediction_npy(filename, model, G, labels, train_idx=None
                            labels=labels, loss=loss, **attention_w, **attention_gw)
 
 
-def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
+def export_explainer_weights(filename, task, seed, node_idx, cg_dict, model, G):
     exp_args = explainer_main.arg_parse()
+    exp_args.dataset = "syn" + str(task)
     writer = None
     graph_mode = False
     graph_idx = 0
     unconstrained = False
+
+    shape_ids = np.array([G.nodes[n].get('shape_id', -1) for n in G.nodes()])
 
     explainer = explain.Explainer(
         model=model,
@@ -137,6 +140,7 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
 
     # mimicking Explainer.explain method to construct ExplainModule
     node_idx_new, sub_adj, sub_feat, sub_label, neighbors = explainer.extract_neighborhood(node_idx, graph_idx)
+    sub_shape_ids = shape_ids[neighbors]
     sub_label = np.expand_dims(sub_label, axis=0)
     sub_adj = np.expand_dims(sub_adj, axis=0)
     sub_feat = np.expand_dims(sub_feat, axis=0)
@@ -172,12 +176,16 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
     edge_mask = edge_mask.cpu().detach().numpy() * sub_adj.squeeze()
     feat_mask = feat_grad.detach().numpy()
 
+    pred, real = explainer.make_pred_real(edge_mask, node_idx_new) 
+    pred_topn, real_topn = explainer.make_pred_real(edge_mask, node_idx_new, binarize=True) 
+
     ypred, _ = model(x, adj) # prediction on the subgraph, used for further checks
     ypred = ypred.detach().numpy()
 
     np.savez(filename + "_grad", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
-        pred_label=pred_label, ypred=ypred, sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
+        pred_label=pred_label, ypred=ypred, sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj, sub_shape_ids=sub_shape_ids,
         edge_mask=edge_mask, feat_mask=feat_mask,
+        pred=pred, real=real, pred_topn=pred_topn, real_topn=real_topn,
         W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp, **attention_w)
 
     ### attention method if a model with attention has been given
@@ -189,10 +197,14 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
         ypred = ypred.detach().numpy()
         adj_atts = adj_atts.detach().numpy()
 
+        pred, real = explainer.make_pred_real(masked_adj, node_idx_new) 
+        pred_topn, real_topn = explainer.make_pred_real(masked_adj, node_idx_new, binarize=True) 
+
         np.savez(filename + "_attn", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
             adj_atts=adj_atts, ypred=ypred,
-            sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
+            sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj, sub_shape_ids=sub_shape_ids,
             masked_adj=masked_adj, 
+            pred=pred, real=real, pred_topn=pred_topn, real_topn=real_topn,
             W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp, **attention_w)
 
     ### explainer's loss and gradient (first iteration output only)
@@ -228,10 +240,14 @@ def export_explainer_weights(filename, seed, node_idx, cg_dict, model):
 
     masked_adj_trained = explain_module._masked_adj().detach().numpy().copy()
 
+    pred, real = explainer.make_pred_real(masked_adj_trained[0], node_idx_new) 
+    pred_topn, real_topn = explainer.make_pred_real(masked_adj_trained[0], node_idx_new, binarize=True) 
+
     np.savez(filename + "_exp", node_idx=node_idx, node_idx_new=node_idx_new, neighbors=neighbors,
         loss=loss, ypred=ypred, pred_label=pred_label,
-        sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj,
+        sub_label=sub_label, sub_feat=sub_feat, sub_adj=sub_adj, sub_shape_ids=sub_shape_ids,
         masked_adj_trained=masked_adj_trained, masked_adj_init=masked_adj_init, 
+        pred=pred, real=real, pred_topn=pred_topn, real_topn=real_topn,
         edge_mask_init=edge_mask_init, feat_mask_init=feat_mask_init,
         grad_edge_mask_init=grad_edge_mask_init, grad_feat_mask_init=grad_feat_mask_init,
         W1=W1, W2=W2, W3=W3, Wp=Wp, b1=b1, b2=b2, b3=b3, bp=bp, **attention_w)
@@ -260,7 +276,8 @@ def syn_task1(args, writer=None):
     export_weights_and_prediction_npy("./model_export/syn1:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 300
-    export_explainer_weights("./model_export/syn1:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    task = 1
+    export_explainer_weights("./model_export/syn1:{}_{}_explain".format(args.method, args.seed), task, args.seed, node_idx, cg_dict, model, G)
 
 
 def syn_task2(args, writer=None):
@@ -285,7 +302,8 @@ def syn_task2(args, writer=None):
     export_weights_and_prediction_npy("./model_export/syn2:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 300
-    export_explainer_weights("./model_export/syn2:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    task = 2
+    export_explainer_weights("./model_export/syn2:{}_{}_explain".format(args.method, args.seed), task, args.seed, node_idx, cg_dict, model, G)
 
 
 def syn_task3(args, writer=None):
@@ -312,7 +330,8 @@ def syn_task3(args, writer=None):
     export_weights_and_prediction_npy("./model_export/syn3:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 301
-    export_explainer_weights("./model_export/syn3:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    task = 3
+    export_explainer_weights("./model_export/syn3:{}_{}_explain".format(args.method, args.seed), task, args.seed, node_idx, cg_dict, model, G)
 
 
 def syn_task4(args, writer=None):
@@ -339,7 +358,8 @@ def syn_task4(args, writer=None):
     export_weights_and_prediction_npy("./model_export/syn4:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 511
-    export_explainer_weights("./model_export/syn4:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    task = 4
+    export_explainer_weights("./model_export/syn4:{}_{}_explain".format(args.method, args.seed), task, args.seed, node_idx, cg_dict, model, G)
 
 
 def syn_task5(args, writer=None):
@@ -367,7 +387,8 @@ def syn_task5(args, writer=None):
     export_weights_and_prediction_npy("./model_export/syn5:{}_{}_trained".format(args.method, args.seed), model, G, labels, cg_dict["train_idx"])
 
     node_idx = 512
-    export_explainer_weights("./model_export/syn5:{}_{}_explain".format(args.method, args.seed), args.seed, node_idx, cg_dict, model)
+    task = 5
+    export_explainer_weights("./model_export/syn5:{}_{}_explain".format(args.method, args.seed), task, args.seed, node_idx, cg_dict, model, G)
 
 outdir = "./model_export"
 if not os.path.isdir(outdir):
@@ -381,5 +402,6 @@ for method in ["base", "attn"]:
     for seed in range(5):
         prog_args.seed = seed
         for i in range(5):
+            prog_args.dataset = "syn" + str(i+1)
             fun = 'syn_task' + str(i+1)
             eval(fun)(prog_args)
